@@ -20,8 +20,20 @@ app.use(function (state, emitter) {
     })
 })
 
-app.route('/', require('./views/main'))
-app.route('/file/:hash', require('./views/file'))
+app.use(function (state, emitter) {
+  state.peers = []
+  request.get('/peers')
+    .then((response) => {
+      state.peers = response.data
+      emitter.emit('render')
+    })
+})
+
+app.route('/', require('./views/files'))
+app.route('/files', require('./views/files'))
+app.route('/files/:sha256', require('./views/file'))
 app.route('/*', require('./views/404'))
+app.route('/peers', require('./views/peers'))
+app.route('/peers/:peerId', require('./views/peer'))
 
 module.exports = app.mount('body')
