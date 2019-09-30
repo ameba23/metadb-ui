@@ -35,5 +35,6 @@ app.route('/files/:sha256', require('./views/file'))
 app.route('/*', require('./views/404'))
 app.route('/peers', require('./views/peers'))
 app.route('/peers/:peerId', require('./views/peer'))
+app.route('/search/:searchterm', require('./views/search'))
 
 module.exports = app.mount('body')
