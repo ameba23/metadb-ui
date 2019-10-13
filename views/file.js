@@ -50,7 +50,7 @@ function view (state, emit) {
     return basic(html`
       <h3>${file.filename}</h3>
       ${item(null, file)}
-    `)
+    `, state, emit)
   } else {
     return basic(html`<p>File not found</p>`)
   }

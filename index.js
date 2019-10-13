@@ -29,6 +29,10 @@ app.use(function (state, emitter) {
     })
 })
 
+app.use((state, emitter) => {
+  state.searchterm = ''
+})
+
 app.route('/', require('./views/files'))
 app.route('/files', require('./views/files'))
 app.route('/files/:sha256', require('./views/file'))
