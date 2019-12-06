@@ -3,6 +3,7 @@ const TITLE = 'metadb'
 
 const basic = require('./basic')
 module.exports = view
+module.exports.filesView = filesView
 
 function tableLine (file) {
   return html`
@@ -14,6 +15,10 @@ function tableLine (file) {
 }
 
 function view (state, emit) {
+  return filesView(state, emit, 'files')
+}
+
+function filesView (state, emit, files) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
 
   return basic(html`
@@ -22,11 +27,7 @@ function view (state, emit) {
       <th>filename</th>
       <th>mime type</th>
     </tr>
-    ${state.files.map(tableLine)}
+    ${state[files].map(tableLine)}
     </table>
   `, state, emit)
-
-  // function handleClick () {
-  //   emit('clicks:add', 1)
-  // }
 }

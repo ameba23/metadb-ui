@@ -29,6 +29,15 @@ app.use(function (state, emitter) {
     })
 })
 
+app.use(function (state, emitter) {
+  state.myFiles = []
+  request.get('/myfiles')
+    .then((response) => {
+      state.ownFiles = response.data
+      emitter.emit('render')
+    })
+})
+
 app.use((state, emitter) => {
   state.searchterm = ''
 })
@@ -36,6 +45,7 @@ app.use((state, emitter) => {
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
 app.route('/files', require('./views/files'))
+app.route('/ownfiles', require('./views/own-files'))
 app.route('/files/:sha256', require('./views/file'))
 app.route('/peers', require('./views/peers'))
 app.route('/peers/:peerId', require('./views/peer'))
