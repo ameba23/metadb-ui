@@ -24,7 +24,7 @@ function view (state, emit) {
     </tr>
     ${state.files.map(tableLine)}
     </table>
-  `,state, emit)
+  `, state, emit)
 
   // function handleClick () {
   //   emit('clicks:add', 1)

@@ -33,10 +33,10 @@ app.use((state, emitter) => {
   state.searchterm = ''
 })
 
+app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
 app.route('/files', require('./views/files'))
 app.route('/files/:sha256', require('./views/file'))
-app.route('/*', require('./views/404'))
 app.route('/peers', require('./views/peers'))
 app.route('/peers/:peerId', require('./views/peer'))
 app.route('/search/:searchterm', require('./views/search'))

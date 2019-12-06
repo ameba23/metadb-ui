@@ -18,7 +18,9 @@ function displayPeer (peer) {
 function item (key, value) {
   if (key === 'holders' && depth === 0) {
     return html`
+      <li><b>Held by:</b>
       <ul>${value.map(displayPeer)}</ul>
+      </li>
       `
   }
 

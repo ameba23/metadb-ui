@@ -1,21 +1,24 @@
 const html = require('choo/html')
 
 module.exports = function (content, state, emit) {
-  state.searchterm = ''
+  // state.searchterm = ''
   return html`
     <body>
       <h2>metadb</h2>
       <h3><a href="/">files</a> - <a href="/peers">peers</a> - settings</h3>
-        <input type=text id="searchterm" value=${state.searchterm} name="searchterm">
+      <form id="search" onsubmit=${onSubmit}>
+        <input type=text id="searchterm" value="" name="searchterm">
         <input type=submit value="search">
-        ${state.searchterm}
+      </form>
       ${content}
     </body>
   `
 }
 
-// function onSubmit (e) {
-//   e.preventDefault()
-//   const body = new FormData(e.currentTarget)
-//   fetch('/seach', { method: 'POST', body })
-// }
+function onSubmit (e) {
+  // e.preventDefault()
+  var form = e.currentTarget
+  var body = new FormData(form)
+  // body.get('searchterm')
+  // fetch('/seach', { method: 'POST', body })
+}
