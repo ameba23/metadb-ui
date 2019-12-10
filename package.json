@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "browserify index.js -t sheetify -o bundle.js",
+    "build": "browserify index.js -t sheetify -o bundle.js && node refresh.js",
+    "start": "beefy index.js",
     "test": "standard && npm run test-deps",
     "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
   },
@@ -15,6 +16,7 @@
     "tachyons": "^4.11.1"
   },
   "devDependencies": {
+    "beefy": "^2.1.8",
     "dependency-check": "^3.3.0",
     "standard": "^12.0.1"
   }
