@@ -8,7 +8,7 @@ module.exports = function (content, state, emit) {
       <h2>metadb</h2>
       <h3>
         <form id="search" onsubmit=${onSubmit}>
-          <a href="/">files</a> - <a href="/ownfiles">own files</a> - <a href="/peers">peers</a> - settings -
+          <a href="#">files</a> - <a href="#ownfiles">own files</a> - <a href="#peers">peers</a> - settings -
           <input type=text id="searchterm" value="" name="searchterm">
           <input type=submit value="search">
         </form>
@@ -21,11 +21,10 @@ module.exports = function (content, state, emit) {
     e.preventDefault()
     var form = e.currentTarget
     var thing = formData(form)
-    console.log(JSON.stringify(thing))
     // body.get('searchterm')
-    request.get('/search', thing)
+    request.post('/search', thing)
       .then((res) => {
-        emit('seachResult', res)
+        emit('searchResult', res)
       })
       .catch(console.log)
   }

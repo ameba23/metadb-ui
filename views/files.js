@@ -8,7 +8,7 @@ module.exports.filesView = filesView
 function tableLine (file) {
   return html`
     <tr>
-      <td><a href="/files/${file.sha256}">${file.filename}</a></td>
+      <td><a href="#files/${file.sha256}">${file.filename}</a></td>
       <td>${file.metadata.mimeType}</td>
     </tr>
   `

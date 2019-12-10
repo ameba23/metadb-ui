@@ -40,18 +40,18 @@ app.use(function (state, emitter) {
 
 app.use((state, emitter) => {
   emitter.on('searchResult', (res) => {
-    state.searchResult = res
-    emitter.emit('replaceState', '/search')
+    state.searchResult = res.data
+    emitter.emit('replaceState', '#search')
   })
 })
 
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
-app.route('/files', require('./views/files'))
-app.route('/ownfiles', require('./views/own-files'))
-app.route('/files/:sha256', require('./views/file'))
-app.route('/peers', require('./views/peers'))
-app.route('/peers/:peerId', require('./views/peer'))
-app.route('/search', require('./views/search'))
+app.route('#files', require('./views/files'))
+app.route('#ownfiles', require('./views/own-files'))
+app.route('#files/:sha256', require('./views/file'))
+app.route('#peers', require('./views/peers'))
+app.route('#peers/:peerId', require('./views/peer'))
+app.route('#search', require('./views/search'))
 
 module.exports = app.mount('body')
