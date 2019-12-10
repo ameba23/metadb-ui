@@ -7,5 +7,5 @@ module.exports = view
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
 
-  return basic(html`<p>${state.params.searchterm}</o>`)
+  return basic(html`<p>${JSON.stringify(state.searchResult)}</o>`)
 }

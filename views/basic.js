@@ -1,4 +1,5 @@
 const html = require('choo/html')
+const request = require('../request')
 
 module.exports = function (content, state, emit) {
   // state.searchterm = ''
@@ -15,12 +16,24 @@ module.exports = function (content, state, emit) {
       ${content}
     </body>
   `
-}
 
-function onSubmit (e) {
-  // e.preventDefault()
-  var form = e.currentTarget
-  var body = new FormData(form)
-  // body.get('searchterm')
-  // fetch('/seach', { method: 'POST', body })
+  function onSubmit (e) {
+    e.preventDefault()
+    var form = e.currentTarget
+    var thing = formData(form)
+    console.log(JSON.stringify(thing))
+    // body.get('searchterm')
+    request.get('/search', thing)
+      .then((res) => {
+        emit('seachResult', res)
+      })
+      .catch(console.log)
+  }
+}
+function formData (form) {
+  const data = {}
+  new FormData(form).forEach((v, k) => {
+    data[k] = v
+  })
+  return data
 }
