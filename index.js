@@ -5,11 +5,11 @@ const request = require('./request')
 css('tachyons')
 
 var app = choo()
-if (process.env.NODE_ENV !== 'production') {
-  app.use(require('choo-devtools')())
-} else {
-  app.use(require('choo-service-worker')())
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   app.use(require('choo-devtools')())
+// } else {
+//   app.use(require('choo-service-worker')())
+// }
 
 app.use(function (state, emitter) {
   state.files = []
@@ -39,7 +39,10 @@ app.use(function (state, emitter) {
 })
 
 app.use((state, emitter) => {
-  state.searchterm = ''
+  emitter.on('searchResult', (res) => {
+    state.searchResult = res
+    emitter.emit('replaceState', '/search')
+  })
 })
 
 app.route('/*', require('./views/404'))
@@ -49,6 +52,6 @@ app.route('/ownfiles', require('./views/own-files'))
 app.route('/files/:sha256', require('./views/file'))
 app.route('/peers', require('./views/peers'))
 app.route('/peers/:peerId', require('./views/peer'))
-app.route('/search/:searchterm', require('./views/search'))
+app.route('/search', require('./views/search'))
 
 module.exports = app.mount('body')
