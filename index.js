@@ -21,6 +21,15 @@ app.use(function (state, emitter) {
 })
 
 app.use(function (state, emitter) {
+  state.files = []
+  request.get('/settings')
+    .then((response) => {
+      state.settings = response.data
+      emitter.emit('render')
+    })
+})
+
+app.use(function (state, emitter) {
   state.peers = []
   request.get('/peers')
     .then((response) => {
@@ -45,6 +54,20 @@ app.use((state, emitter) => {
   })
 })
 
+app.use((state, emitter) => {
+  emitter.on('updateConnection', (res) => {
+    state.settings.connections = res.data
+    emitter.emit('render')
+  })
+})
+
+app.use((state, emitter) => {
+  emitter.on('updateSettings', (res) => {
+    state.settings = res.data
+    emitter.emit('render')
+  })
+})
+
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
 app.route('#files', require('./views/files'))
@@ -53,5 +76,7 @@ app.route('#files/:sha256', require('./views/file'))
 app.route('#peers', require('./views/peers'))
 app.route('#peers/:peerId', require('./views/peer'))
 app.route('#search', require('./views/search'))
+app.route('#settings', require('./views/settings'))
+app.route('#connection', require('./views/connection'))
 
 module.exports = app.mount('body')

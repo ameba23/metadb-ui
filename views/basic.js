@@ -8,7 +8,7 @@ module.exports = function (content, state, emit) {
       <h2>metadb</h2>
       <h3>
         <form id="search" onsubmit=${onSubmit}>
-          <a href="#">files</a> - <a href="#ownfiles">own files</a> - <a href="#peers">peers</a> - settings -
+          <a href="#connection">connection</a> - <a href="#">files</a> - <a href="#ownfiles">shares</a> - <a href="#peers">peers</a> - <a href="#settings">settings</a> -
           <input type=text id="searchterm" value="" name="searchterm">
           <input type=submit value="search">
         </form>

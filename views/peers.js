@@ -5,7 +5,8 @@ const basic = require('./basic')
 module.exports = view
 
 function displayPeer (peer) {
-  return html`<li><a href="/peers/${peer.peerId}">${peer.peerId}</a> - ${peer.numberFiles} files.</li>`
+  if (!peer.name) peer.name = peer.peerId
+  return html`<li><a href="/peers/${peer.peerId}">${peer.name}</a> - ${peer.numberFiles} files.</li>`
 }
 
 function view (state, emit) {

@@ -24,6 +24,8 @@ function item (key, value) {
       `
   }
 
+  if (value === [] || value === {} || !value) value = ''
+  if (Array.isArray(value)) value = JSON.stringify(value) // TODO this could be improved
   if (typeof value === 'object') {
     // depth += 1
     return html`
@@ -51,6 +53,7 @@ function view (state, emit) {
   if (file) {
     return basic(html`
       <h3>${file.filename}</h3>
+      <button type="button">Request file</button>
       ${item(null, file)}
     `, state, emit)
   } else {

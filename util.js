@@ -7,4 +7,12 @@ function readableBytes (bytes) {
   return (bytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + sizes[i]
 }
 
-module.exports = { readableBytes }
+function formData (form) {
+  const data = {}
+  new FormData(form).forEach((v, k) => {
+    data[k] = v
+  })
+  return data
+}
+
+module.exports = { readableBytes, formData }
