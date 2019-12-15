@@ -1,8 +1,9 @@
 const { filesView } = require('./files')
+const basic = require('./basic')
 
 module.exports = view
 function view (state, emit) {
-  return filesView(state, emit, 'searchResult')
+  return basic(state, emit, filesView(state, emit, 'searchResult'))
 }
 // const html = require('choo/html')
 // const basic = require('./basic')

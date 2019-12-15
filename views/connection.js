@@ -6,7 +6,7 @@ const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
-  return basic(html`
+  return basic(state, emit, html`
     <h3>Connections</h3>
     <ul>${state.settings.connections.map(showConnection)}</ul>
     <form id="swarmtopic" onsubmit=${onSubmit}>

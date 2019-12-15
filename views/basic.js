@@ -1,7 +1,7 @@
 const html = require('choo/html')
 const request = require('../request')
 
-module.exports = function (content, state, emit) {
+module.exports = function (state, emit, content) {
   // state.searchterm = ''
   return html`
     <body>
@@ -22,7 +22,7 @@ module.exports = function (content, state, emit) {
     var form = e.currentTarget
     var thing = formData(form)
     // body.get('searchterm')
-    request.post('/search', thing)
+    request.post('/files/search', thing)
       .then((res) => {
         emit('searchResult', res)
       })

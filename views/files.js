@@ -1,5 +1,6 @@
 const html = require('choo/html')
 const TITLE = 'metadb'
+const { readableBytes } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
@@ -10,7 +11,7 @@ function tableLine (file) {
     <tr>
       <td>${file.filename.split('/').map(subdir)}</td>
       <td>${file.metadata.mimeType}</td>
-      <td>${file.metadata.size}</td>
+      <td>${readableBytes(file.size)}</td>
     </tr>
   `
   function subdir (portion) {
@@ -21,13 +22,12 @@ function tableLine (file) {
 }
 
 function view (state, emit) {
-  return filesView(state, emit, 'files')
+  if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
+  return basic(state, emit, filesView(state, emit, 'files'))
 }
 
 function filesView (state, emit, files) {
-  if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-
-  return basic(html`
+  return html`
     <table>
     <tr>
       <th>filename</th>
@@ -36,5 +36,5 @@ function filesView (state, emit, files) {
     </tr>
     ${state[files].map(tableLine)}
     </table>
-  `, state, emit)
+  `
 }

@@ -5,7 +5,7 @@ const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
-  return basic(html`
+  return basic(state, emit, html`
     <h3>Settings</h3>
     <p>Current name: ${JSON.stringify(state.settings.peerNames)}</p>
     <form id="addname" onsubmit=${onSubmit}>

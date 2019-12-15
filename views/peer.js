@@ -8,8 +8,9 @@ function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const peer = state.peers.find(peer => peer.peerId === state.params.peerId)
   if (peer) {
-    return basic(html`
-      <h3>${peer.peerId}</h3>
+    peer.name = peer.name || peer.peerId
+    return basic(state, emit, html`
+      <h3>${peer.name} - ${peer.numberFiles} files</h3>
     `)
     // TODO show files this peer is holding
   } else {

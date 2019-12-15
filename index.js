@@ -40,7 +40,7 @@ app.use(function (state, emitter) {
 
 app.use(function (state, emitter) {
   state.myFiles = []
-  request.get('/myfiles')
+  request.get('/files/ownfiles')
     .then((response) => {
       state.ownFiles = response.data
       emitter.emit('render')
