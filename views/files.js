@@ -1,6 +1,7 @@
 const html = require('choo/html')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
+const path = require('path')
 
 const basic = require('./basic')
 module.exports = view
@@ -9,14 +10,15 @@ module.exports.filesView = filesView
 function tableLine (file) {
   return html`
     <tr>
-      <td>${file.filename.split('/').map(subdir)}</td>
+      <td>${path.dirname(file.filename).split('/').map(subdir)}
+          <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
       <td>${file.metadata.mimeType}</td>
       <td>${readableBytes(file.size)}</td>
     </tr>
   `
-  function subdir (portion) {
+  function subdir (portion, i, filePath) {
+    const subdir = filePath.slice(0, i)
     // TODO subdir links should take you to that part of the dir structure
-    // TODO the last one need to be treated differeently
     return html`<a href="#files/${file.sha256}">${portion}</a> / `
   }
 }
