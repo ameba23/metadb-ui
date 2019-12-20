@@ -5,11 +5,6 @@ const request = require('./request')
 css('tachyons')
 
 var app = choo()
-// if (process.env.NODE_ENV !== 'production') {
-//   app.use(require('choo-devtools')())
-// } else {
-//   app.use(require('choo-service-worker')())
-// }
 
 app.use(function (state, emitter) {
   state.files = []
@@ -68,6 +63,12 @@ app.use((state, emitter) => {
   })
 })
 
+app.use((state, emitter) => {
+  emitter.on('subdirResult', (res) => {
+    state.subdir = res.data
+    emitter.emit('replaceState', '#subdir')
+  })
+})
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
 app.route('#files', require('./views/files'))
@@ -78,5 +79,6 @@ app.route('#peers/:peerId', require('./views/peer'))
 app.route('#search', require('./views/search'))
 app.route('#settings', require('./views/settings'))
 app.route('#connection', require('./views/connection'))
+app.route('#subdir', require('./views/subdir'))
 
 module.exports = app.mount('body')

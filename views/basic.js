@@ -5,14 +5,14 @@ module.exports = function (state, emit, content) {
   // state.searchterm = ''
   return html`
     <body>
-      <h2>metadb</h2>
       <h3>
         <form id="search" onsubmit=${onSubmit}>
-          <a href="#connection">connection</a> - <a href="#">files</a> - <a href="#ownfiles">shares</a> - <a href="#peers">peers</a> - <a href="#settings">settings</a> -
+          <strong>metadb</strong> - <a href="#connection">connection</a> - <a href="#">files</a> - <a href="#ownfiles">shares</a> - <a href="#peers">peers</a> - <a href="#settings">settings</a> -
           <input type=text id="searchterm" value="" name="searchterm">
           <input type=submit value="search">
         </form>
       </h3>
+      <hr>
       ${content}
     </body>
   `
