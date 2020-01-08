@@ -40,7 +40,7 @@ function view (state, emit) {
   }
 
   function requestFile () {
-    request.post('/request', { data: { files: [file.sha256] } })
+    request.post('/request', { files: [file.sha256] })
       .then((res) => {
         emit('updateRequests', res)
       })

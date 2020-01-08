@@ -6,7 +6,7 @@ module.exports = view
 
 function displayPeer (peer) {
   peer.name = peer.name || peer.peerId
-  return html`<li><a href="/peers/${peer.peerId}">${peer.name}</a> - ${peer.numberFiles} files.</li>`
+  return html`<li><a href="#peers/${peer.peerId}">${peer.name}</a> - ${peer.numberFiles} files.</li>`
 }
 
 function view (state, emit) {
