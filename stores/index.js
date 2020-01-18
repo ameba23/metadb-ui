@@ -11,6 +11,32 @@ module.exports = function (state, emitter) {
   })
   emitter.emit('updateFiles')
 
+  emitter.on('navigate', (d) => {
+    console.log('navigate', state.route)
+    console.log('params', state.params)
+    switch (state.route) {
+      case '/':
+        emitter.emit('updateFiles')
+        break
+      case 'peers':
+        emitter.emit('updatePeers')
+        break
+      case 'ownFiles':
+        emitter.emit('shares')
+        break
+      case 'transfers':
+        emitter.emit('updateRequests')
+        break
+      case 'files/:sha256':
+        request.get(`/files/${state.params.sha256}`)
+          .then((response) => {
+            state.file = response.data
+            emitter.emit('render')
+          })
+        break
+    }
+  })
+
   request.get('/settings')
     .then((response) => {
       state.settings = response.data
@@ -28,6 +54,7 @@ module.exports = function (state, emitter) {
         emitter.emit('render')
       })
   })
+  emitter.emit('updatePeers')
 
   state.ownFiles = []
   emitter.on('shares', () => {
