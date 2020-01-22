@@ -11,7 +11,8 @@ var depth = 0
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  const file = state.files.find(file => file.sha256 === state.params.sha256)
+  // const file = state.files.find(file => file.sha256 === state.params.sha256)
+  const file = state.file
   if (file) {
     return basic(state, emit, html`
       <h3>${file.filename}</h3>
@@ -42,7 +43,7 @@ function view (state, emit) {
   function requestFile () {
     request.post('/request', { files: [file.sha256] })
       .then((res) => {
-        emit('updateRequests', res)
+        emit('transfers', res) // TODO: dont acutally need to pass res
       })
       .catch(console.log) // TODO
   }
