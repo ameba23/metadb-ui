@@ -14,6 +14,6 @@ function view (state, emit) {
     `)
     // TODO show files this peer is holding
   } else {
-    return basic(html`<p> Peer not found</p>`)
+    return basic(html`<p>Peer not found</p>`)
   }
 }

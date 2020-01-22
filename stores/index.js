@@ -2,30 +2,23 @@ const request = require('../request')
 
 module.exports = function (state, emitter) {
   state.files = []
-  emitter.on('updateFiles', () => {
-    request.get('/files')
-      .then((response) => {
-        state.files = response.data
-        emitter.emit('render')
-      })
-  })
-  emitter.emit('updateFiles')
+  state.peers = []
 
   emitter.on('navigate', (d) => {
     console.log('navigate', state.route)
     console.log('params', state.params)
     switch (state.route) {
       case '/':
-        emitter.emit('updateFiles')
+        emitter.emit('files')
         break
       case 'peers':
-        emitter.emit('updatePeers')
+        emitter.emit('peers')
         break
-      case 'ownFiles':
+      case 'shares':
         emitter.emit('shares')
         break
       case 'transfers':
-        emitter.emit('updateRequests')
+        emitter.emit('transfers')
         break
       case 'files/:sha256':
         request.get(`/files/${state.params.sha256}`)
@@ -37,37 +30,46 @@ module.exports = function (state, emitter) {
     }
   })
 
-  request.get('/settings')
-    .then((response) => {
-      state.settings = response.data
-      // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
-      // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
-      // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
-      emitter.emit('render')
-    })
+  emitter.on('files', () => {
+    request.get('/files')
+      .then((response) => {
+        state.files = response.data
+        emitter.emit('render')
+      })
+  })
+  emitter.emit('files')
 
-  state.peers = []
-  emitter.on('updatePeers', () => {
+  emitter.on('peers', () => {
     request.get('/peers')
       .then((response) => {
         state.peers = response.data
         emitter.emit('render')
       })
   })
-  emitter.emit('updatePeers')
+  emitter.emit('peers')
 
-  state.ownFiles = []
+  state.shares = []
   emitter.on('shares', () => {
-    request.get('/files/ownfiles')
+    request.get('/files/shares')
       .then((response) => {
-        state.ownFiles = response.data
+        state.files = response.data
         emitter.emit('render')
       })
   })
-  emitter.emit('shares')
+
+  emitter.on('transfers', (res) => {
+    request.get('/request/fromSelf').then((response) => {
+      state.request.fromSelf = response.data
+      request.get('/request/fromOthers').then((response) => {
+        state.request.fromOthers = response.data
+        emitter.emit('render')
+      })
+    })
+  })
+  emitter.emit('transfers')
 
   emitter.on('searchResult', (res) => {
-    state.searchResult = res.data
+    state.files = res.data
     emitter.emit('replaceState', '#search')
   })
 
@@ -82,7 +84,7 @@ module.exports = function (state, emitter) {
   })
 
   emitter.on('subdirResult', (res) => {
-    state.subdir = res.data
+    state.files = res.data
     emitter.emit('replaceState', '#subdir')
   })
 
@@ -90,14 +92,13 @@ module.exports = function (state, emitter) {
     fromSelf: [],
     fromOthers: []
   }
-  emitter.on('updateRequests', (res) => {
-    request.get('/request/fromSelf').then((response) => {
-      state.request.fromSelf = response.data
-      request.get('/request/fromOthers').then((response) => {
-        state.request.fromOthers = response.data
-        emitter.emit('render')
-      })
+
+  request.get('/settings')
+    .then((response) => {
+      state.settings = response.data
+      // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
+      // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
+      // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
+      emitter.emit('render')
     })
-  })
-  emitter.emit('updateRequests')
 }

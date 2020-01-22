@@ -43,7 +43,7 @@ function view (state, emit) {
   function requestFile () {
     request.post('/request', { files: [file.sha256] })
       .then((res) => {
-        emit('updateRequests', res)
+        emit('transfers', res) // TODO: dont acutally need to pass res
       })
       .catch(console.log) // TODO
   }
