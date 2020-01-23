@@ -1,4 +1,5 @@
 const html = require('choo/html')
+const h = require('hyperscript')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
 const path = require('path')
@@ -8,12 +9,16 @@ const basic = require('./basic')
 module.exports = view
 module.exports.filesView = filesView
 
+const noFiles = h('p', 'You currently have no files in the database.  To add some, either ',
+  h('a', { href: '#connection' }, 'connect to a swarm'), ' or ', h('a', { href: '#shares' }, 'add some files'), ' yourself.')
+
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  return basic(state, emit, filesView(state, emit, 'files'))
+  return basic(state, emit, filesView(state, emit, 'files', noFiles))
 }
 
-function filesView (state, emit, files) {
+function filesView (state, emit, files, noFilesMessage) {
+  noFilesMessage = noFilesMessage || h('p', 'No files to display')
   function tableLine (file) {
     return html`
     <tr>
@@ -39,19 +44,33 @@ function filesView (state, emit, files) {
       return html`<a href="javascript:void(null)" onclick=${subdirQuery(filePath.slice(0, i + 1))}>${portion}</a> / `
     }
   }
-  return html`
-    <form id="selectFiles" onsubmit="${requestFiles}">
-    <table>
-      <tr>
-        <th>filename</th>
-        <th>mime type</th>
-        <th>size</th>
-      </tr>
-      ${state[files].map(tableLine)}
-    </table>
-    <input type=submit value="request files">
-    </form>
-  `
+  return h('form', { id: 'selectFiles', onsubmit: requestFiles },
+    h('table',
+      h('tr',
+        h('th', 'Filename'),
+        h('th', 'MIME type'),
+        h('th', 'Size')
+      ),
+      state[files].map(tableLine)
+    ),
+    state[files].length
+      ? h('input', { type: 'submit', value: 'Request files' })
+      : noFilesMessage
+  )
+
+  // return html`
+  //   <form id="selectFiles" onsubmit="${requestFiles}">
+  //   <table>
+  //     <tr>
+  //       <th>filename</th>
+  //       <th>mime type</th>
+  //       <th>size</th>
+  //     </tr>
+  //     ${state[files].map(tableLine)}
+  //   </table>
+  //   <input type=submit value="request files">
+  //   </form>
+  // `
   function requestFiles () {}
   //   Select <a href="javascript:selectToggle(true, 'selectFiles');">All</a> | <a href="javascript:selectToggle(false, 'selectFiles');">None</a><p>
   // function selectToggle(toggle, form) {

@@ -101,4 +101,9 @@ module.exports = function (state, emitter) {
       // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
       emitter.emit('render')
     })
+
+  emitter.on('indexFiles', (res) => {
+    state.indexedFiles = res.data
+    emitter.emit('render')
+  })
 }
