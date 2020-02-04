@@ -7,7 +7,7 @@
     "test": "standard && npm run test-deps",
     "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
   },
-  "files": ["dist/index.html"],
+  "files": ["built/index.html"],
   "dependencies": {
     "axios": "^0.19.0",
     "choo": "^6.13.3",
