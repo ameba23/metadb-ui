@@ -3,6 +3,9 @@ const request = require('../request')
 module.exports = function (state, emitter) {
   state.files = []
   state.peers = []
+  state.settings = {
+    connectedPeers: []
+  }
 
   emitter.on('navigate', (d) => {
     console.log('navigate', state.route)
@@ -11,8 +14,16 @@ module.exports = function (state, emitter) {
       case '/':
         emitter.emit('files')
         break
+      case 'peers/:peerId':
+        request.get(`/files/byPeer/${state.params.peerId}`)
+          .then((response) => {
+            state.files = response.data
+            emitter.emit('render')
+          })
+        break
       case 'peers':
         emitter.emit('peers')
+        emitter.emit('settings')
         break
       case 'shares':
         emitter.emit('shares')
@@ -38,6 +49,9 @@ module.exports = function (state, emitter) {
       })
   })
   emitter.emit('files')
+
+  emitter.on('peer', () => {
+  })
 
   emitter.on('peers', () => {
     request.get('/peers')
@@ -93,14 +107,17 @@ module.exports = function (state, emitter) {
     fromOthers: []
   }
 
-  request.get('/settings')
-    .then((response) => {
-      state.settings = response.data
-      // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
-      // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
-      // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
-      emitter.emit('render')
-    })
+  emitter.on('settings', () => {
+    request.get('/settings')
+      .then((response) => {
+        state.settings = response.data
+        // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
+        // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
+        // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
+        emitter.emit('render')
+      })
+  })
+  emitter.emit('settings')
 
   emitter.on('indexFiles', (res) => {
     state.indexedFiles = res.data

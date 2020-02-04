@@ -15,7 +15,7 @@ function view (state, emit) {
   function displayPeer (feedId) {
     const peer = state.peers.find(p => p.feedId === feedId)
     if (!peer) return feedId
-    return h('a', { href: `#peers/${peer.feedId}` }, peer.name)
+    return h('a', { href: `#peers/${peer.feedId}` }, peer.name || peer.feedId)
   }
 
   function displayFile (file) {
@@ -31,7 +31,7 @@ function view (state, emit) {
     const peer = displayPeer(request.recipients.find(r => r !== state.settings.key))
     const requested = fromSelf
       ? h('you requested ', peer, 's files: ')
-      : h(displayPeer, ' requested files: ')
+      : h(peer, ' requested files: ')
 
     return h('li',
       'On ', displayTimestamp(request.timestamp), ' ',
