@@ -18,7 +18,31 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'submit', value: 'search' })
       )),
     h('hr'),
-    content)
+    state.connectionError ? connectionError : undefined,
+    content
+  )
+
+  function connectionError () {
+    return h('span',
+      h('h2', `Error when trying to connect to the API on
+        ${state.connectionSettings.host}:${state.connectionSettings.port}.`),
+      h('h3', 'Is the metadb API running?'),
+      h('form', { id: 'connection', onsubmit: onSubmitConnection },
+        h('p',
+          h('label', { for: 'host' }, 'Host:'),
+          h('input', { type: 'text', id: 'host', name: 'host', value: state.connectionSettings.host }),
+          h('label', { for: 'port' }, ':'),
+          h('input', { type: 'text', id: 'port', name: 'port', value: state.connectionSettings.port })
+        ),
+        h('input', { type: 'submit', value: 'Update connection settings' })
+      ),
+      h('hr')
+    )
+  }
+
+  function onSubmitConnection (e) {
+
+  }
 
   function onSubmit (e) {
     e.preventDefault()

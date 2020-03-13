@@ -6148,7 +6148,31 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'submit', value: 'search' })
       )),
     h('hr'),
-    content)
+    state.connectionError ? connectionError : undefined,
+    content
+  )
+
+  function connectionError () {
+    return h('span',
+      h('h2', `Error when trying to connect to the API on
+        ${state.connectionSettings.host}:${state.connectionSettings.port}.`),
+      h('h3', 'Is the metadb API running?'),
+      h('form', { id: 'connection', onsubmit: onSubmitConnection },
+        h('p',
+          h('label', { for: 'host' }, 'Host:'),
+          h('input', { type: 'text', id: 'host', name: 'host', value: state.connectionSettings.host }),
+          h('label', { for: 'port' }, ':'),
+          h('input', { type: 'text', id: 'port', name: 'port', value: state.connectionSettings.port })
+        ),
+        h('input', { type: 'submit', value: 'Update connection settings' })
+      ),
+      h('hr')
+    )
+  }
+
+  function onSubmitConnection (e) {
+
+  }
 
   function onSubmit (e) {
     e.preventDefault()
@@ -6336,10 +6360,6 @@ function view (state, emit) {
 
 function filesView (state, emit, files, noFilesMessage) {
   const request = createRequest(state.connectionSettings)
-  if (state.connectionError && !state[files].length) {
-    // TODO display expected host and port number and give an option to change it
-    return h('h3', 'Error when trying to connect to the API. Is the metadb API running?')
-  }
 
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
 
@@ -6488,12 +6508,18 @@ function view (state, emit) {
   const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Settings</h3>
-    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSetttings.port}</p>
+    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}</p>
     <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
-      <label for="name">Name:</label>
-      <input type=text id="name" value="" name="name">
-      <input type=submit value="Update name">
+      <p>
+        <label for="name">Name: </label>
+        <input type=text id="name" value="" name="name">
+      </p>
+      <p>
+        <label for="downloadPath">Download path: </label>
+        <input type="text" id="downloadPath" value="${state.settings.downloadPath}" name="downloadPath">
+      </p>
+      <input type=submit value="Update settings">
     </form>
   `)
 

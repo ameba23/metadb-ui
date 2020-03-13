@@ -20,10 +20,6 @@ function view (state, emit) {
 
 function filesView (state, emit, files, noFilesMessage) {
   const request = createRequest(state.connectionSettings)
-  if (state.connectionError && !state[files].length) {
-    // TODO display expected host and port number and give an option to change it
-    return h('h3', 'Error when trying to connect to the API. Is the metadb API running?')
-  }
 
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
 

@@ -8,12 +8,18 @@ function view (state, emit) {
   const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Settings</h3>
-    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSetttings.port}</p>
+    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}</p>
     <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
-      <label for="name">Name:</label>
-      <input type=text id="name" value="" name="name">
-      <input type=submit value="Update name">
+      <p>
+        <label for="name">Name: </label>
+        <input type=text id="name" value="" name="name">
+      </p>
+      <p>
+        <label for="downloadPath">Download path: </label>
+        <input type="text" id="downloadPath" value="${state.settings.downloadPath}" name="downloadPath">
+      </p>
+      <input type=submit value="Update settings">
     </form>
   `)
 
