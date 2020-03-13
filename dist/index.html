@@ -13,7 +13,12 @@ var choo = require('choo')
 
 var app = choo()
 
-app.use(require('./stores'))
+const defaultSettings = {
+  host: 'http://localhost',
+  port: 3000
+}
+
+app.use(require('./stores')(defaultSettings))
 
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
@@ -5920,140 +5925,159 @@ function extend(target) {
 },{}],72:[function(require,module,exports){
 const axios = require('axios')
 
-const port = 3000
-
-module.exports = axios.create({
-  baseURL: `http://localhost:${port}/`,
-  timeout: 1000,
-  headers: { 'Content-type': 'application/json' }
-})
+module.exports = function createRequest ({ host, port, timeout }) {
+  return axios.create({
+    baseURL: `${host}:${port}/`,
+    timeout: timeout || 1000,
+    headers: { 'Content-type': 'application/json' }
+  })
+}
 
 },{"axios":6}],73:[function(require,module,exports){
-const request = require('../request')
+const createRequest = require('../request')
 
-module.exports = function (state, emitter) {
-  state.files = []
-  state.peers = []
-  state.settings = {
-    connectedPeers: []
-  }
-
-  emitter.on('navigate', (d) => {
-    console.log('navigate', state.route)
-    console.log('params', state.params)
-    switch (state.route) {
-      case '/':
-        emitter.emit('files')
-        break
-      case 'peers/:peerId':
-        request.get(`/files/byPeer/${state.params.peerId}`)
-          .then((response) => {
-            state.files = response.data
-            emitter.emit('render')
-          })
-        break
-      case 'peers':
-        emitter.emit('peers')
-        emitter.emit('settings')
-        break
-      case 'shares':
-        emitter.emit('shares')
-        break
-      case 'transfers':
-        emitter.emit('transfers')
-        break
-      case 'files/:sha256':
-        request.get(`/files/${state.params.sha256}`)
-          .then((response) => {
-            state.file = response.data
-            emitter.emit('render')
-          })
-        break
+module.exports = function createStores (defaultSettings) {
+  return function (state, emitter) {
+    state.files = []
+    state.peers = []
+    state.settings = {
+      connectedPeers: []
     }
-  })
+    state.connectionSettings = defaultSettings
+    const request = createRequest(state.connectionSettings)
 
-  emitter.on('files', () => {
-    request.get('/files')
-      .then((response) => {
-        state.files = response.data
-        emitter.emit('render')
-      })
-  })
-  emitter.emit('files')
+    emitter.on('navigate', (d) => {
+      console.log('navigate', state.route)
+      console.log('params', state.params)
+      switch (state.route) {
+        case '/':
+          emitter.emit('files')
+          break
+        case 'peers/:peerId':
+          request.get(`/files/byPeer/${state.params.peerId}`)
+            .then((response) => {
+              state.connectionError = false
+              state.files = response.data
+              emitter.emit('render')
+            })
+          break
+        case 'peers':
+          emitter.emit('peers')
+          emitter.emit('settings')
+          break
+        case 'shares':
+          emitter.emit('shares')
+          break
+        case 'transfers':
+          emitter.emit('transfers')
+          break
+        case 'files/:sha256':
+          request.get(`/files/${state.params.sha256}`)
+            .then((response) => {
+              state.connectionError = false
+              state.file = response.data
+              emitter.emit('render')
+            })
+          break
+      }
+    })
 
-  emitter.on('peer', () => {
-  })
+    emitter.on('files', () => {
+      request.get('/files')
+        .then((response) => {
+          state.connectionError = false
+          state.files = response.data
+          emitter.emit('render')
+        }).catch(handleError)
+    })
+    emitter.emit('files')
 
-  emitter.on('peers', () => {
-    request.get('/peers')
-      .then((response) => {
-        state.peers = response.data
-        emitter.emit('render')
-      })
-  })
-  emitter.emit('peers')
+    emitter.on('peer', () => {
+    })
 
-  state.shares = []
-  emitter.on('shares', () => {
-    request.get('/files/shares')
-      .then((response) => {
-        state.files = response.data
-        emitter.emit('render')
-      })
-  })
+    emitter.on('peers', () => {
+      request.get('/peers')
+        .then((response) => {
+          state.connectionError = false
+          state.peers = response.data
+          emitter.emit('render')
+        }).catch(handleError)
+    })
+    emitter.emit('peers')
 
-  emitter.on('transfers', (res) => {
-    request.get('/request/fromSelf').then((response) => {
-      state.request.fromSelf = response.data
-      request.get('/request/fromOthers').then((response) => {
-        state.request.fromOthers = response.data
-        emitter.emit('render')
+    state.shares = []
+    emitter.on('shares', () => {
+      request.get('/files/shares')
+        .then((response) => {
+          state.connectionError = false
+          state.files = response.data
+          emitter.emit('render')
+        }).catch(handleError)
+    })
+
+    emitter.on('transfers', (res) => {
+      request.get('/request/fromSelf').then((response) => {
+        state.connectionError = false
+        state.request.fromSelf = response.data
+        request.get('/request/fromOthers').then((response) => {
+          state.request.fromOthers = response.data
+          emitter.emit('render')
+        }).catch(handleError)
       })
     })
-  })
-  emitter.emit('transfers')
+    emitter.emit('transfers')
 
-  emitter.on('searchResult', (res) => {
-    state.files = res.data
-    emitter.emit('replaceState', '#search')
-  })
+    emitter.on('searchResult', (res) => {
+      state.files = res.data
+      emitter.emit('replaceState', '#search')
+    })
 
-  emitter.on('updateConnection', (res) => {
-    state.settings.connections = res.data
-    emitter.emit('render')
-  })
+    emitter.on('updateConnection', (res) => {
+      state.settings.connections = res.data
+      emitter.emit('render')
+    })
 
-  emitter.on('updateSettings', (res) => {
-    state.settings = res.data
-    emitter.emit('render')
-  })
+    emitter.on('updateSettings', (res) => {
+      state.settings = res.data
+      emitter.emit('render')
+    })
 
-  emitter.on('subdirResult', (res) => {
-    state.files = res.data
-    emitter.emit('replaceState', '#subdir')
-  })
+    emitter.on('subdirResult', (res) => {
+      state.files = res.data
+      emitter.emit('replaceState', '#subdir')
+    })
 
-  state.request = {
-    fromSelf: [],
-    fromOthers: []
-  }
+    state.request = {
+      fromSelf: [],
+      fromOthers: []
+    }
 
-  emitter.on('settings', () => {
-    request.get('/settings')
-      .then((response) => {
-        state.settings = response.data
-        // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
-        // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
-        // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
+    emitter.on('settings', () => {
+      request.get('/settings')
+        .then((response) => {
+          state.connectionError = false
+          state.settings = response.data
+          // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
+          // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
+          // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
+          emitter.emit('render')
+        }).catch(handleError)
+    })
+    emitter.emit('settings')
+
+    emitter.on('indexFiles', (res) => {
+      state.indexedFiles = res.data
+      emitter.emit('render')
+    })
+
+    function handleError (error) {
+      console.log('error has name', error.message)
+      if (error.message === 'Network Error') {
+        state.connectionError = true
         emitter.emit('render')
-      })
-  })
-  emitter.emit('settings')
-
-  emitter.on('indexFiles', (res) => {
-    state.indexedFiles = res.data
-    emitter.emit('render')
-  })
+      }
+    }
+  }
 }
 
 },{"../request":72}],74:[function(require,module,exports){
@@ -6213,6 +6237,7 @@ function view (state, emit) {
     return basic(state, emit, html`
       <h3>${file.filename}</h3>
       <button type="button" onclick="${requestFile}">Request file</button>
+      <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
       ${item(null, file)}
       <form id="comment" onsubmit=${onSubmit}>
         <input type=text id="comment" value="" name="comment">
@@ -6242,6 +6267,14 @@ function view (state, emit) {
         emit('transfers', res) // TODO: dont acutally need to pass res
       })
       .catch(console.log) // TODO
+  }
+
+  function requestContainingDirectory () {
+    // request.post('/request', { files: [file.sha256] })
+    //   .then((res) => {
+    //     emit('transfers', res) // TODO: dont acutally need to pass res
+    //   })
+    //   .catch(console.log) // TODO
   }
 
   function displayKey (key) {
@@ -6293,7 +6326,8 @@ const h = require('hyperscript')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
 const path = require('path')
-const request = require('../request')
+const createRequest = require('../request')
+const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
@@ -6308,12 +6342,19 @@ function view (state, emit) {
 }
 
 function filesView (state, emit, files, noFilesMessage) {
+  const request = createRequest(state.connectionSettings)
+  if (state.connectionError && !state[files].length) {
+    // TODO display expected host and port number and give an option to change it
+    return h('h3', 'Error when trying to connect to the API. Is the metadb API running?')
+  }
+
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
+
   function tableLine (file) {
     return html`
     <tr>
       <td>
-          <input type="checkbox" name="files" value="${file.sha256}">
+          <input type="checkbox" id="${file.sha256}" name="${file.sha256}" value="true">
           ${path.dirname(file.filename).split('/').map(subdir)}
           <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
       <td>${file.metadata.mimeType}</td>
@@ -6361,7 +6402,18 @@ function filesView (state, emit, files, noFilesMessage) {
   //   <input type=submit value="request files">
   //   </form>
   // `
-  function requestFiles () {}
+
+  function requestFiles (e) {
+    e.preventDefault()
+    var form = e.currentTarget
+    var thing = formData(form)
+    request.post('/request', { files: Object.keys(thing) })
+      .then((res) => {
+        emit('transfers', res) // TODO: dont acutally need to pass res
+      })
+      .catch(console.log) // TODO
+  }
+
   //   Select <a href="javascript:selectToggle(true, 'selectFiles');">All</a> | <a href="javascript:selectToggle(false, 'selectFiles');">None</a><p>
   // function selectToggle(toggle, form) {
   //   var myForm = document.forms[form];
@@ -6535,10 +6587,11 @@ function view (state, emit) {
     }
 
     request.replies = request.replies || []
-    const peer = displayPeer(request.recipients.find(r => r !== state.settings.key))
+    const peerId = request.recipients.find(r => r !== state.settings.key)
+    const peer = peerId ? displayPeer(peerId) : 'unknown peer'
     const requested = fromSelf
-      ? h('you requested ', peer, 's files: ')
-      : h(peer, ' requested files: ')
+      ? h('span', 'you requested', peer, 's files: ')
+      : h('span', peer, ' requested files: ')
 
     return h('li',
       'On ', displayTimestamp(request.timestamp), ' ',

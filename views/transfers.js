@@ -28,10 +28,11 @@ function view (state, emit) {
     }
 
     request.replies = request.replies || []
-    const peer = displayPeer(request.recipients.find(r => r !== state.settings.key))
+    const peerId = request.recipients.find(r => r !== state.settings.key)
+    const peer = peerId ? displayPeer(peerId) : 'unknown peer'
     const requested = fromSelf
-      ? h('you requested ', peer, 's files: ')
-      : h(peer, ' requested files: ')
+      ? h('span', 'you requested', peer, 's files: ')
+      : h('span', peer, ' requested files: ')
 
     return h('li',
       'On ', displayTimestamp(request.timestamp), ' ',

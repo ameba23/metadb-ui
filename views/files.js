@@ -3,7 +3,8 @@ const h = require('hyperscript')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
 const path = require('path')
-const request = require('../request')
+const createRequest = require('../request')
+const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
@@ -18,12 +19,19 @@ function view (state, emit) {
 }
 
 function filesView (state, emit, files, noFilesMessage) {
+  const request = createRequest(state.connectionSettings)
+  if (state.connectionError && !state[files].length) {
+    // TODO display expected host and port number and give an option to change it
+    return h('h3', 'Error when trying to connect to the API. Is the metadb API running?')
+  }
+
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
+
   function tableLine (file) {
     return html`
     <tr>
       <td>
-          <input type="checkbox" name="files" value="${file.sha256}">
+          <input type="checkbox" id="${file.sha256}" name="${file.sha256}" value="true">
           ${path.dirname(file.filename).split('/').map(subdir)}
           <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
       <td>${file.metadata.mimeType}</td>
@@ -71,7 +79,18 @@ function filesView (state, emit, files, noFilesMessage) {
   //   <input type=submit value="request files">
   //   </form>
   // `
-  function requestFiles () {}
+
+  function requestFiles (e) {
+    e.preventDefault()
+    var form = e.currentTarget
+    var thing = formData(form)
+    request.post('/request', { files: Object.keys(thing) })
+      .then((res) => {
+        emit('transfers', res) // TODO: dont acutally need to pass res
+      })
+      .catch(console.log) // TODO
+  }
+
   //   Select <a href="javascript:selectToggle(true, 'selectFiles');">All</a> | <a href="javascript:selectToggle(false, 'selectFiles');">None</a><p>
   // function selectToggle(toggle, form) {
   //   var myForm = document.forms[form];

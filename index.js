@@ -5,7 +5,12 @@ css('tachyons')
 
 var app = choo()
 
-app.use(require('./stores'))
+const defaultSettings = {
+  host: 'http://localhost',
+  port: 3000
+}
+
+app.use(require('./stores')(defaultSettings))
 
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))

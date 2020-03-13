@@ -17,6 +17,7 @@ function view (state, emit) {
     return basic(state, emit, html`
       <h3>${file.filename}</h3>
       <button type="button" onclick="${requestFile}">Request file</button>
+      <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
       ${item(null, file)}
       <form id="comment" onsubmit=${onSubmit}>
         <input type=text id="comment" value="" name="comment">
@@ -46,6 +47,14 @@ function view (state, emit) {
         emit('transfers', res) // TODO: dont acutally need to pass res
       })
       .catch(console.log) // TODO
+  }
+
+  function requestContainingDirectory () {
+    // request.post('/request', { files: [file.sha256] })
+    //   .then((res) => {
+    //     emit('transfers', res) // TODO: dont acutally need to pass res
+    //   })
+    //   .catch(console.log) // TODO
   }
 
   function displayKey (key) {
