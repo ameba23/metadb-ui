@@ -1,9 +1,9 @@
-const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const h = require('hyperscript')
+const { formData } = require('../util')
 
 module.exports = function (state, emit, content) {
-  // state.searchterm = ''
+  const request = createRequest(state.connectionSettings)
   return h('body',
     h('h3',
       h('form', { id: 'search', onsubmit: onSubmit },
@@ -19,37 +19,16 @@ module.exports = function (state, emit, content) {
       )),
     h('hr'),
     content)
-  // return html`
-  //   <body>
-  //     <h3>
-  //       <form id="search" onsubmit=${onSubmit}>
-  //         <strong>metadb</strong> - <a href="#connection">connection</a> - <a href="#">files</a> -
-  //         <a href="#shares">shares</a> - <a href="#peers">peers</a> - <a href="#settings">settings</a> - <a href="#transfers">transfers</a> -
-  //         <input type=text id="searchterm" value="" name="searchterm">
-  //         <input type=submit value="search">
-  //       </form>
-  //     </h3>
-  //     <hr>
-  //     ${content}
-  //   </body>
-  // `
 
   function onSubmit (e) {
     e.preventDefault()
     var form = e.currentTarget
     var thing = formData(form)
-    // body.get('searchterm')
+    // TODO this request should be in the store
     request.post('/files/search', thing)
       .then((res) => {
         emit('searchResult', res)
       })
       .catch(console.log)
   }
-}
-function formData (form) {
-  const data = {}
-  new FormData(form).forEach((v, k) => {
-    data[k] = v
-  })
-  return data
 }

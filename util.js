@@ -1,4 +1,3 @@
-
 function readableBytes (bytes) {
   if (bytes < 1) return 0 + ' B'
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
@@ -15,4 +14,16 @@ function formData (form) {
   return data
 }
 
-module.exports = { readableBytes, formData }
+function createOnSubmit (requestFn, route, emit, event) {
+  return function onSubmit (e) {
+    e.preventDefault()
+    var form = e.currentTarget
+    requestFn(route, formData(form))
+      .then((res) => {
+        emit(event, res)
+      })
+      .catch(console.log) // TODO
+  }
+}
+
+module.exports = { readableBytes, formData, createOnSubmit }

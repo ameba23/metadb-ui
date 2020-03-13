@@ -1,11 +1,13 @@
 const basic = require('./basic')
-const request = require('../request')
+const createRequest = require('../request')
 const html = require('choo/html')
 const { filesView } = require('./files')
+const { formData } = require('../util')
 
 module.exports = view
-// state.settings.shares
+
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>shares</h3>
     <p>${JSON.stringify(state.settings.shares)}</p>
@@ -17,6 +19,7 @@ function view (state, emit) {
     ${filesView(state, emit, 'files')}
     `
   )
+
   function onSubmit (e) {
     e.preventDefault()
     var form = e.currentTarget
@@ -27,12 +30,4 @@ function view (state, emit) {
       })
       .catch(console.log)
   }
-}
-
-function formData (form) {
-  const data = {}
-  new FormData(form).forEach((v, k) => {
-    data[k] = v
-  })
-  return data
 }

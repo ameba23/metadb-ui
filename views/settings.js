@@ -1,12 +1,14 @@
 const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Settings</h3>
+    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSetttings.port}</p>
     <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
       <label for="name">Name:</label>

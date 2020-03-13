@@ -1,11 +1,12 @@
 const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Connections</h3>
     <ul>${state.settings.connections.map(showConnection)}</ul>
@@ -26,10 +27,12 @@ function view (state, emit) {
       })
       .catch(console.log) // TODO
   }
-  function showConnection (con) {
-    const unSwarm = UnSwarm(con)
-    return html`<li>${con} <button onclick="${unSwarm}">Disconnect</button></li>`
+
+  function showConnection (connection) {
+    const unSwarm = UnSwarm(connection)
+    return html`<li>${connection} <button onclick="${unSwarm}">Disconnect</button></li>`
   }
+
   function UnSwarm (swarm) {
     return function () {
       request.delete('/swarm', { data: { swarm } })

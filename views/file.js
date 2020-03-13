@@ -1,17 +1,17 @@
 const html = require('choo/html')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
 
-var depth = 0
+var depth = 0 // TODO is this needed?
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  // const file = state.files.find(file => file.sha256 === state.params.sha256)
   const file = state.file
   if (file) {
     return basic(state, emit, html`
