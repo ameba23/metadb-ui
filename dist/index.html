@@ -6081,7 +6081,6 @@ module.exports = function createStores (defaultSettings) {
 }
 
 },{"../request":72}],74:[function(require,module,exports){
-
 function readableBytes (bytes) {
   if (bytes < 1) return 0 + ' B'
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
@@ -6098,7 +6097,19 @@ function formData (form) {
   return data
 }
 
-module.exports = { readableBytes, formData }
+function createOnSubmit (requestFn, route, emit, event) {
+  return function onSubmit (e) {
+    e.preventDefault()
+    var form = e.currentTarget
+    requestFn(route, formData(form))
+      .then((res) => {
+        emit(event, res)
+      })
+      .catch(console.log) // TODO
+  }
+}
+
+module.exports = { readableBytes, formData, createOnSubmit }
 
 },{}],75:[function(require,module,exports){
 var html = require('choo/html')
@@ -6117,12 +6128,12 @@ function view (state, emit) {
 }
 
 },{"./basic":76,"choo/html":35}],76:[function(require,module,exports){
-const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const h = require('hyperscript')
+const { formData } = require('../util')
 
 module.exports = function (state, emit, content) {
-  // state.searchterm = ''
+  const request = createRequest(state.connectionSettings)
   return h('body',
     h('h3',
       h('form', { id: 'search', onsubmit: onSubmit },
@@ -6138,26 +6149,12 @@ module.exports = function (state, emit, content) {
       )),
     h('hr'),
     content)
-  // return html`
-  //   <body>
-  //     <h3>
-  //       <form id="search" onsubmit=${onSubmit}>
-  //         <strong>metadb</strong> - <a href="#connection">connection</a> - <a href="#">files</a> -
-  //         <a href="#shares">shares</a> - <a href="#peers">peers</a> - <a href="#settings">settings</a> - <a href="#transfers">transfers</a> -
-  //         <input type=text id="searchterm" value="" name="searchterm">
-  //         <input type=submit value="search">
-  //       </form>
-  //     </h3>
-  //     <hr>
-  //     ${content}
-  //   </body>
-  // `
 
   function onSubmit (e) {
     e.preventDefault()
     var form = e.currentTarget
     var thing = formData(form)
-    // body.get('searchterm')
+    // TODO this request should be in the store
     request.post('/files/search', thing)
       .then((res) => {
         emit('searchResult', res)
@@ -6165,23 +6162,17 @@ module.exports = function (state, emit, content) {
       .catch(console.log)
   }
 }
-function formData (form) {
-  const data = {}
-  new FormData(form).forEach((v, k) => {
-    data[k] = v
-  })
-  return data
-}
 
-},{"../request":72,"choo/html":35,"hyperscript":40}],77:[function(require,module,exports){
+},{"../request":72,"../util":74,"hyperscript":40}],77:[function(require,module,exports){
 const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Connections</h3>
     <ul>${state.settings.connections.map(showConnection)}</ul>
@@ -6202,10 +6193,12 @@ function view (state, emit) {
       })
       .catch(console.log) // TODO
   }
-  function showConnection (con) {
-    const unSwarm = UnSwarm(con)
-    return html`<li>${con} <button onclick="${unSwarm}">Disconnect</button></li>`
+
+  function showConnection (connection) {
+    const unSwarm = UnSwarm(connection)
+    return html`<li>${connection} <button onclick="${unSwarm}">Disconnect</button></li>`
   }
+
   function UnSwarm (swarm) {
     return function () {
       request.delete('/swarm', { data: { swarm } })
@@ -6221,17 +6214,17 @@ function view (state, emit) {
 const html = require('choo/html')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
 
-var depth = 0
+var depth = 0 // TODO is this needed?
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  // const file = state.files.find(file => file.sha256 === state.params.sha256)
   const file = state.file
   if (file) {
     return basic(state, emit, html`
@@ -6486,14 +6479,16 @@ function view (state, emit) {
 
 },{"./basic":76,"./files":79}],83:[function(require,module,exports){
 const html = require('choo/html')
-const request = require('../request')
+const createRequest = require('../request')
 const { formData } = require('../util')
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>Settings</h3>
+    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSetttings.port}</p>
     <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
       <label for="name">Name:</label>
@@ -6516,13 +6511,15 @@ function view (state, emit) {
 
 },{"../request":72,"../util":74,"./basic":76,"choo/html":35}],84:[function(require,module,exports){
 const basic = require('./basic')
-const request = require('../request')
+const createRequest = require('../request')
 const html = require('choo/html')
 const { filesView } = require('./files')
+const { formData } = require('../util')
 
 module.exports = view
-// state.settings.shares
+
 function view (state, emit) {
+  const request = createRequest(state.connectionSettings)
   return basic(state, emit, html`
     <h3>shares</h3>
     <p>${JSON.stringify(state.settings.shares)}</p>
@@ -6534,6 +6531,7 @@ function view (state, emit) {
     ${filesView(state, emit, 'files')}
     `
   )
+
   function onSubmit (e) {
     e.preventDefault()
     var form = e.currentTarget
@@ -6546,15 +6544,7 @@ function view (state, emit) {
   }
 }
 
-function formData (form) {
-  const data = {}
-  new FormData(form).forEach((v, k) => {
-    data[k] = v
-  })
-  return data
-}
-
-},{"../request":72,"./basic":76,"./files":79,"choo/html":35}],85:[function(require,module,exports){
+},{"../request":72,"../util":74,"./basic":76,"./files":79,"choo/html":35}],85:[function(require,module,exports){
 arguments[4][82][0].apply(exports,arguments)
 },{"./basic":76,"./files":79,"dup":82}],86:[function(require,module,exports){
 const html = require('choo/html')
