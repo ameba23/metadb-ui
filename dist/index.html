@@ -6057,9 +6057,6 @@ module.exports = function createStores (defaultSettings) {
         .then((response) => {
           state.connectionError = false
           state.settings = response.data
-          // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
-          // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
-          // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
           emitter.emit('render')
         }).catch(handleError)
     })
@@ -6130,7 +6127,7 @@ function view (state, emit) {
 },{"./basic":76,"choo/html":35}],76:[function(require,module,exports){
 const createRequest = require('../request')
 const h = require('hyperscript')
-const { formData } = require('../util')
+const { formData, readableBytes } = require('../util')
 
 module.exports = function (state, emit, content) {
   const request = createRequest(state.connectionSettings)
@@ -6147,6 +6144,7 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'text', id: 'searchterm', value: '', name: 'searchterm' }),
         h('input', { type: 'submit', value: 'search' })
       )),
+    h('p', `${state.settings.filesInDb} files in db (${readableBytes(state.settings.bytesInDb)})`),
     h('hr'),
     state.connectionError ? connectionError : undefined,
     content
@@ -6341,10 +6339,9 @@ function view (state, emit) {
 const html = require('choo/html')
 const h = require('hyperscript')
 const TITLE = 'metadb'
-const { readableBytes } = require('../util')
 const path = require('path')
 const createRequest = require('../request')
-const { formData } = require('../util')
+const { formData, readableBytes } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
@@ -6468,6 +6465,7 @@ function view (state, emit) {
 const h = require('hyperscript')
 const TITLE = 'metadb - peers'
 const basic = require('./basic')
+const { readableBytes } = require('../util')
 
 module.exports = view
 
@@ -6475,12 +6473,13 @@ function view (state, emit) {
   function displayPeer (peer) {
     const me = (peer.feedId === state.settings.key) ? '(You)' : undefined
     const name = peer.name || peer.feedId
-    const files = peer.numberFiles ? ` - ${peer.numberFiles} files.` : undefined
+    const files = peer.files ? ` - ${peer.files} files.` : undefined
+    const bytes = peer.bytes ? `(${readableBytes(peer.bytes)})` : undefined
     const connected = state.settings.connectedPeers.includes(peer.feedId)
       ? ' connected' : ''
     return h('li',
       h('a', { href: `#peers/${peer.feedId}` }, name),
-      files, me, connected
+      files, bytes, me, connected
     )
   }
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
@@ -6488,7 +6487,7 @@ function view (state, emit) {
   return basic(state, emit, h('ul', state.peers.map(displayPeer)))
 }
 
-},{"./basic":76,"hyperscript":40}],82:[function(require,module,exports){
+},{"../util":74,"./basic":76,"hyperscript":40}],82:[function(require,module,exports){
 const { filesView } = require('./files')
 const basic = require('./basic')
 

@@ -1,6 +1,6 @@
 const createRequest = require('../request')
 const h = require('hyperscript')
-const { formData } = require('../util')
+const { formData, readableBytes } = require('../util')
 
 module.exports = function (state, emit, content) {
   const request = createRequest(state.connectionSettings)
@@ -17,6 +17,7 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'text', id: 'searchterm', value: '', name: 'searchterm' }),
         h('input', { type: 'submit', value: 'search' })
       )),
+    h('p', `${state.settings.filesInDb} files in db (${readableBytes(state.settings.bytesInDb)})`),
     h('hr'),
     state.connectionError ? connectionError : undefined,
     content

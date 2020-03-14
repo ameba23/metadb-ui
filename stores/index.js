@@ -121,9 +121,6 @@ module.exports = function createStores (defaultSettings) {
         .then((response) => {
           state.connectionError = false
           state.settings = response.data
-          // state.settings.events.files.on('update', () => { emitter.emit('updateFiles') })
-          // state.settings.events.peers.on('update', () => { emitter.emit('updatePeers') })
-          // state.settings.events.requests.on('update', () => { emitter.emit('updateRequests') })
           emitter.emit('render')
         }).catch(handleError)
     })

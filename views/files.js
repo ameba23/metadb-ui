@@ -1,10 +1,9 @@
 const html = require('choo/html')
 const h = require('hyperscript')
 const TITLE = 'metadb'
-const { readableBytes } = require('../util')
 const path = require('path')
 const createRequest = require('../request')
-const { formData } = require('../util')
+const { formData, readableBytes } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
