@@ -19,17 +19,17 @@ function view (state, emit) {
       <button type="button" onclick="${requestFile}">Request file</button>
       <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
       ${item(null, file)}
-      <form id="comment" onsubmit=${onSubmit}>
+      <form id="comment" onsubmit=${onSubmitComment}>
         <input type=text id="comment" value="" name="comment">
         <input type=submit value="add comment">
       </form>
       <button>star</button>
     `)
   } else {
-    return basic(html`<p>File not found</p>`)
+    return basic(state, emit, html`<p>File not found</p>`)
   }
 
-  function onSubmit (e) {
+  function onSubmitComment (e) {
     e.preventDefault()
     var form = e.currentTarget
     var thing = formData(form)

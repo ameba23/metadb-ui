@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "browserify index.js -t sheetify | indexhtmlify > dist/index.html",
+    "build-debug": "browserify --debug index.js -t sheetify | indexhtmlify > dist/debug-index.html",
     "start": "beefy index.js",
     "test": "standard && npm run test-deps",
     "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"

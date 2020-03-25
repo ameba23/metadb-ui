@@ -38,10 +38,11 @@ module.exports = function createStores (defaultSettings) {
         case 'files/:sha256':
           request.get(`/files/${state.params.sha256}`)
             .then((response) => {
+              console.log('got res from files:id', JSON.stringify(response.data))
               state.connectionError = false
               state.file = response.data
               emitter.emit('render')
-            })
+            }).catch(handleError)
           break
       }
     })
