@@ -23,11 +23,12 @@ function filesView (state, emit, files, noFilesMessage) {
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
 
   function tableLine (file) {
+    const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
     return html`
     <tr>
       <td>
           <input type="checkbox" id="${file.sha256}" name="${file.sha256}" value="true">
-          ${path.dirname(file.filename).split('/').map(subdir)}
+          ${filenames.map(filename => path.dirname(filename).split('/').map(subdir))}
           <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
       <td>${file.metadata.mimeType}</td>
       <td>${readableBytes(file.size)}</td>
@@ -44,7 +45,10 @@ function filesView (state, emit, files, noFilesMessage) {
             .catch(console.log)
         }
       }
-      return html`<a href="javascript:void(null)" onclick=${subdirQuery(filePath.slice(0, i + 1))}>${portion}</a> / `
+      return h('span', h('a', {
+        href: 'javascript:void(null)',
+        onclick: subdirQuery(filePath.slice(0, i + 1))
+      }, portion), ' / ')
     }
   }
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },

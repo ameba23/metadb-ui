@@ -9,11 +9,10 @@ function view (state, emit) {
   return basic(state, emit, html`
     <h3>Settings</h3>
     <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}</p>
-    <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
       <p>
         <label for="name">Name: </label>
-        <input type=text id="name" value="" name="name">
+        <input type=text id="name" value="${state.settings.peerNames[state.settings.key]}" name="name">
       </p>
       <p>
         <label for="downloadPath">Download path: </label>

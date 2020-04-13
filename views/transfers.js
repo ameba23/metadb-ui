@@ -31,7 +31,7 @@ function view (state, emit) {
     const peerId = request.recipients.find(r => r !== state.settings.key)
     const peer = peerId ? displayPeer(peerId) : 'unknown peer'
     const requested = fromSelf
-      ? h('span', 'you requested', peer, 's files: ')
+      ? h('span', 'you requested ', peer, 's files: ')
       : h('span', peer, ' requested files: ')
 
     return h('li',
@@ -44,8 +44,8 @@ function view (state, emit) {
 
   return basic(state, emit, html`
     <h3>Requests sent:</h3>
-    <ul>${state.request.fromSelf.map(displayRequest, true)}</ul>
+    <ul>${state.request.fromSelf.map(request => displayRequest(request, true))}</ul>
     <h3>Requests received:</h3>
-    <ul>${state.request.fromOthers.map(displayRequest, false)}</ul>
+    <ul>${state.request.fromOthers.map(request => displayRequest(request, false))}</ul>
     `)
 }

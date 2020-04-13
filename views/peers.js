@@ -1,7 +1,7 @@
 const h = require('hyperscript')
-const TITLE = 'metadb - peers'
 const basic = require('./basic')
 const { readableBytes } = require('../util')
+const TITLE = 'metadb - peers'
 
 module.exports = view
 

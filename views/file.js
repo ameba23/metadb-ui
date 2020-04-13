@@ -1,10 +1,11 @@
 const html = require('choo/html')
+const path = require('path')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
 const createRequest = require('../request')
 const { formData } = require('../util')
-
 const basic = require('./basic')
+
 module.exports = view
 
 var depth = 0 // TODO is this needed?
@@ -15,7 +16,7 @@ function view (state, emit) {
   const file = state.file
   if (file) {
     return basic(state, emit, html`
-      <h3>${file.filename}</h3>
+      <h3>${file.filename.toString()}</h3>
       <button type="button" onclick="${requestFile}">Request file</button>
       <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
       ${item(null, file)}
@@ -50,11 +51,18 @@ function view (state, emit) {
   }
 
   function requestContainingDirectory () {
-    // request.post('/request', { files: [file.sha256] })
-    //   .then((res) => {
-    //     emit('transfers', res) // TODO: dont acutally need to pass res
-    //   })
-    //   .catch(console.log) // TODO
+    const subdir = Array.isArray(file.filename)
+      ? path.dirname(file.filename[0]) // TODO how to handle multiple possible dirs
+      : path.dirname(file.filename)
+    request.post('/files/subdir', { subdir })
+      .then((res) => {
+        const files = res.data.map(f => f.sha256)
+        request.post('/request', { files })
+          .then((res) => {
+            emit('transfers', res) // TODO: dont acutally need to pass res
+          })
+          .catch(console.log) // TODO
+      }).catch(console.log)
   }
 
   function displayKey (key) {

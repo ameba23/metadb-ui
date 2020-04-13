@@ -17,11 +17,19 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'text', id: 'searchterm', value: '', name: 'searchterm' }),
         h('input', { type: 'submit', value: 'search' })
       )),
-    h('p', `${state.settings.filesInDb} files in db (${readableBytes(state.settings.bytesInDb)})`),
+    h('p', `${state.settings.filesInDb || '?'} files in db (${readableBytes(state.settings.bytesInDb || 0)}). ${displayConnections()}`),
     h('hr'),
     state.connectionError ? connectionError : undefined,
     content
   )
+
+  function displayConnections () {
+    return state.settings.connections
+      ? state.settings.connections.length
+        ? `Connected to ${state.settings.connections.length} swarm${state.settings.connections.length === 1 ? '' : 's'}.`
+        : 'Not connected.'
+      : ''
+  }
 
   function connectionError () {
     return h('span',

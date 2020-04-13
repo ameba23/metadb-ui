@@ -1175,6 +1175,7 @@ module.exports = require('./lib/axios');
 var utils = require('./../utils');
 var settle = require('./../core/settle');
 var buildURL = require('./../helpers/buildURL');
+var buildFullPath = require('../core/buildFullPath');
 var parseHeaders = require('./../helpers/parseHeaders');
 var isURLSameOrigin = require('./../helpers/isURLSameOrigin');
 var createError = require('../core/createError');
@@ -1197,7 +1198,8 @@ module.exports = function xhrAdapter(config) {
       requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
     }
 
-    request.open(config.method.toUpperCase(), buildURL(config.url, config.params, config.paramsSerializer), true);
+    var fullPath = buildFullPath(config.baseURL, config.url);
+    request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
 
     // Set the request timeout in MS
     request.timeout = config.timeout;
@@ -1258,7 +1260,11 @@ module.exports = function xhrAdapter(config) {
 
     // Handle timeout
     request.ontimeout = function handleTimeout() {
-      reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED',
+      var timeoutErrorMessage = 'timeout of ' + config.timeout + 'ms exceeded';
+      if (config.timeoutErrorMessage) {
+        timeoutErrorMessage = config.timeoutErrorMessage;
+      }
+      reject(createError(timeoutErrorMessage, config, 'ECONNABORTED',
         request));
 
       // Clean up request
@@ -1272,7 +1278,7 @@ module.exports = function xhrAdapter(config) {
       var cookies = require('./../helpers/cookies');
 
       // Add xsrf header
-      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ?
         cookies.read(config.xsrfCookieName) :
         undefined;
 
@@ -1295,8 +1301,8 @@ module.exports = function xhrAdapter(config) {
     }
 
     // Add withCredentials to request if needed
-    if (config.withCredentials) {
-      request.withCredentials = true;
+    if (!utils.isUndefined(config.withCredentials)) {
+      request.withCredentials = !!config.withCredentials;
     }
 
     // Add responseType to request if needed
@@ -1345,7 +1351,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/createError":14,"./../core/settle":18,"./../helpers/buildURL":22,"./../helpers/cookies":24,"./../helpers/isURLSameOrigin":26,"./../helpers/parseHeaders":28,"./../utils":30}],8:[function(require,module,exports){
+},{"../core/buildFullPath":14,"../core/createError":15,"./../core/settle":19,"./../helpers/buildURL":23,"./../helpers/cookies":25,"./../helpers/isURLSameOrigin":27,"./../helpers/parseHeaders":29,"./../utils":31}],8:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -1400,7 +1406,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":9,"./cancel/CancelToken":10,"./cancel/isCancel":11,"./core/Axios":12,"./core/mergeConfig":17,"./defaults":20,"./helpers/bind":21,"./helpers/spread":29,"./utils":30}],9:[function(require,module,exports){
+},{"./cancel/Cancel":9,"./cancel/CancelToken":10,"./cancel/isCancel":11,"./core/Axios":12,"./core/mergeConfig":18,"./defaults":21,"./helpers/bind":22,"./helpers/spread":30,"./utils":31}],9:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1525,7 +1531,15 @@ Axios.prototype.request = function request(config) {
   }
 
   config = mergeConfig(this.defaults, config);
-  config.method = config.method ? config.method.toLowerCase() : 'get';
+
+  // Set config.method
+  if (config.method) {
+    config.method = config.method.toLowerCase();
+  } else if (this.defaults.method) {
+    config.method = this.defaults.method.toLowerCase();
+  } else {
+    config.method = 'get';
+  }
 
   // Hook up interceptors middleware
   var chain = [dispatchRequest, undefined];
@@ -1575,7 +1589,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":22,"./../utils":30,"./InterceptorManager":13,"./dispatchRequest":15,"./mergeConfig":17}],13:[function(require,module,exports){
+},{"../helpers/buildURL":23,"./../utils":31,"./InterceptorManager":13,"./dispatchRequest":16,"./mergeConfig":18}],13:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1629,7 +1643,29 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":30}],14:[function(require,module,exports){
+},{"./../utils":31}],14:[function(require,module,exports){
+'use strict';
+
+var isAbsoluteURL = require('../helpers/isAbsoluteURL');
+var combineURLs = require('../helpers/combineURLs');
+
+/**
+ * Creates a new URL by combining the baseURL with the requestedURL,
+ * only when the requestedURL is not already an absolute URL.
+ * If the requestURL is absolute, this function returns the requestedURL untouched.
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} requestedURL Absolute or relative URL to combine
+ * @returns {string} The combined full path
+ */
+module.exports = function buildFullPath(baseURL, requestedURL) {
+  if (baseURL && !isAbsoluteURL(requestedURL)) {
+    return combineURLs(baseURL, requestedURL);
+  }
+  return requestedURL;
+};
+
+},{"../helpers/combineURLs":24,"../helpers/isAbsoluteURL":26}],15:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -1649,15 +1685,13 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":16}],15:[function(require,module,exports){
+},{"./enhanceError":17}],16:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
 var transformData = require('./transformData');
 var isCancel = require('../cancel/isCancel');
 var defaults = require('../defaults');
-var isAbsoluteURL = require('./../helpers/isAbsoluteURL');
-var combineURLs = require('./../helpers/combineURLs');
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -1677,11 +1711,6 @@ function throwIfCancellationRequested(config) {
 module.exports = function dispatchRequest(config) {
   throwIfCancellationRequested(config);
 
-  // Support baseURL config
-  if (config.baseURL && !isAbsoluteURL(config.url)) {
-    config.url = combineURLs(config.baseURL, config.url);
-  }
-
   // Ensure headers exist
   config.headers = config.headers || {};
 
@@ -1696,7 +1725,7 @@ module.exports = function dispatchRequest(config) {
   config.headers = utils.merge(
     config.headers.common || {},
     config.headers[config.method] || {},
-    config.headers || {}
+    config.headers
   );
 
   utils.forEach(
@@ -1737,7 +1766,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":11,"../defaults":20,"./../helpers/combineURLs":23,"./../helpers/isAbsoluteURL":25,"./../utils":30,"./transformData":19}],16:[function(require,module,exports){
+},{"../cancel/isCancel":11,"../defaults":21,"./../utils":31,"./transformData":20}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1781,7 +1810,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -1799,13 +1828,23 @@ module.exports = function mergeConfig(config1, config2) {
   config2 = config2 || {};
   var config = {};
 
-  utils.forEach(['url', 'method', 'params', 'data'], function valueFromConfig2(prop) {
+  var valueFromConfig2Keys = ['url', 'method', 'params', 'data'];
+  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy'];
+  var defaultToConfig2Keys = [
+    'baseURL', 'url', 'transformRequest', 'transformResponse', 'paramsSerializer',
+    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
+    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress',
+    'maxContentLength', 'validateStatus', 'maxRedirects', 'httpAgent',
+    'httpsAgent', 'cancelToken', 'socketPath'
+  ];
+
+  utils.forEach(valueFromConfig2Keys, function valueFromConfig2(prop) {
     if (typeof config2[prop] !== 'undefined') {
       config[prop] = config2[prop];
     }
   });
 
-  utils.forEach(['headers', 'auth', 'proxy'], function mergeDeepProperties(prop) {
+  utils.forEach(mergeDeepPropertiesKeys, function mergeDeepProperties(prop) {
     if (utils.isObject(config2[prop])) {
       config[prop] = utils.deepMerge(config1[prop], config2[prop]);
     } else if (typeof config2[prop] !== 'undefined') {
@@ -1817,13 +1856,25 @@ module.exports = function mergeConfig(config1, config2) {
     }
   });
 
-  utils.forEach([
-    'baseURL', 'transformRequest', 'transformResponse', 'paramsSerializer',
-    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
-    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress', 'maxContentLength',
-    'validateStatus', 'maxRedirects', 'httpAgent', 'httpsAgent', 'cancelToken',
-    'socketPath'
-  ], function defaultToConfig2(prop) {
+  utils.forEach(defaultToConfig2Keys, function defaultToConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  var axiosKeys = valueFromConfig2Keys
+    .concat(mergeDeepPropertiesKeys)
+    .concat(defaultToConfig2Keys);
+
+  var otherKeys = Object
+    .keys(config2)
+    .filter(function filterAxiosKeys(key) {
+      return axiosKeys.indexOf(key) === -1;
+    });
+
+  utils.forEach(otherKeys, function otherKeysDefaultToConfig2(prop) {
     if (typeof config2[prop] !== 'undefined') {
       config[prop] = config2[prop];
     } else if (typeof config1[prop] !== 'undefined') {
@@ -1834,7 +1885,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":30}],18:[function(require,module,exports){
+},{"../utils":31}],19:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -1861,7 +1912,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":14}],19:[function(require,module,exports){
+},{"./createError":15}],20:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -1883,7 +1934,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":30}],20:[function(require,module,exports){
+},{"./../utils":31}],21:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -1902,13 +1953,12 @@ function setContentTypeIfUnset(headers, value) {
 
 function getDefaultAdapter() {
   var adapter;
-  // Only Node.JS has a process variable that is of [[Class]] process
-  if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
-    // For node use HTTP adapter
-    adapter = require('./adapters/http');
-  } else if (typeof XMLHttpRequest !== 'undefined') {
+  if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
     adapter = require('./adapters/xhr');
+  } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
+    // For node use HTTP adapter
+    adapter = require('./adapters/http');
   }
   return adapter;
 }
@@ -1985,7 +2035,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this,require('_process'))
-},{"./adapters/http":7,"./adapters/xhr":7,"./helpers/normalizeHeaderName":27,"./utils":30,"_process":64}],21:[function(require,module,exports){
+},{"./adapters/http":7,"./adapters/xhr":7,"./helpers/normalizeHeaderName":28,"./utils":31,"_process":64}],22:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -1998,7 +2048,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2071,7 +2121,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":30}],23:[function(require,module,exports){
+},{"./../utils":31}],24:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2087,7 +2137,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2142,7 +2192,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":30}],25:[function(require,module,exports){
+},{"./../utils":31}],26:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2158,7 +2208,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2228,7 +2278,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":30}],27:[function(require,module,exports){
+},{"./../utils":31}],28:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2242,7 +2292,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":30}],28:[function(require,module,exports){
+},{"../utils":31}],29:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2297,7 +2347,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":30}],29:[function(require,module,exports){
+},{"./../utils":31}],30:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2326,11 +2376,10 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
-var isBuffer = require('is-buffer');
 
 /*global toString:true*/
 
@@ -2346,6 +2395,27 @@ var toString = Object.prototype.toString;
  */
 function isArray(val) {
   return toString.call(val) === '[object Array]';
+}
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+/**
+ * Determine if a value is a Buffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Buffer, otherwise false
+ */
+function isBuffer(val) {
+  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
+    && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
 }
 
 /**
@@ -2402,16 +2472,6 @@ function isString(val) {
  */
 function isNumber(val) {
   return typeof val === 'number';
-}
-
-/**
- * Determine if a value is undefined
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if the value is undefined, otherwise false
- */
-function isUndefined(val) {
-  return typeof val === 'undefined';
 }
 
 /**
@@ -2662,20 +2722,7 @@ module.exports = {
   trim: trim
 };
 
-},{"./helpers/bind":21,"is-buffer":31}],31:[function(require,module,exports){
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-
-module.exports = function isBuffer (obj) {
-  return obj != null && obj.constructor != null &&
-    typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-},{}],32:[function(require,module,exports){
+},{"./helpers/bind":22}],32:[function(require,module,exports){
 
 },{}],33:[function(require,module,exports){
 /*!
@@ -6146,11 +6193,19 @@ module.exports = function (state, emit, content) {
         h('input', { type: 'text', id: 'searchterm', value: '', name: 'searchterm' }),
         h('input', { type: 'submit', value: 'search' })
       )),
-    h('p', `${state.settings.filesInDb} files in db (${readableBytes(state.settings.bytesInDb)})`),
+    h('p', `${state.settings.filesInDb || '?'} files in db (${readableBytes(state.settings.bytesInDb || 0)}). ${displayConnections()}`),
     h('hr'),
     state.connectionError ? connectionError : undefined,
     content
   )
+
+  function displayConnections () {
+    return state.settings.connections
+      ? state.settings.connections.length
+        ? `Connected to ${state.settings.connections.length} swarm${state.settings.connections.length === 1 ? '' : 's'}.`
+        : 'Not connected.'
+      : ''
+  }
 
   function connectionError () {
     return h('span',
@@ -6252,7 +6307,7 @@ function view (state, emit) {
   const file = state.file
   if (file) {
     return basic(state, emit, html`
-      <h3>${file.filename}</h3>
+      <h3>${file.filename.toString()}</h3>
       <button type="button" onclick="${requestFile}">Request file</button>
       <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
       ${item(null, file)}
@@ -6363,11 +6418,12 @@ function filesView (state, emit, files, noFilesMessage) {
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
 
   function tableLine (file) {
+    const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
     return html`
     <tr>
       <td>
           <input type="checkbox" id="${file.sha256}" name="${file.sha256}" value="true">
-          ${path.dirname(file.filename).split('/').map(subdir)}
+          ${filenames.map(filename => path.dirname(filename).split('/').map(subdir))}
           <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
       <td>${file.metadata.mimeType}</td>
       <td>${readableBytes(file.size)}</td>
@@ -6384,7 +6440,10 @@ function filesView (state, emit, files, noFilesMessage) {
             .catch(console.log)
         }
       }
-      return html`<a href="javascript:void(null)" onclick=${subdirQuery(filePath.slice(0, i + 1))}>${portion}</a> / `
+      return h('span', h('a', {
+        href: 'javascript:void(null)',
+        onclick: subdirQuery(filePath.slice(0, i + 1))
+      }, portion), ' / ')
     }
   }
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
@@ -6465,9 +6524,9 @@ function view (state, emit) {
 
 },{"./basic":76,"./files":79,"choo/html":35}],81:[function(require,module,exports){
 const h = require('hyperscript')
-const TITLE = 'metadb - peers'
 const basic = require('./basic')
 const { readableBytes } = require('../util')
+const TITLE = 'metadb - peers'
 
 module.exports = view
 
@@ -6510,11 +6569,10 @@ function view (state, emit) {
   return basic(state, emit, html`
     <h3>Settings</h3>
     <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}</p>
-    <p>Current name: ${state.settings.peerNames[state.settings.key]}</p>
     <form id="addname" onsubmit=${onSubmit}>
       <p>
         <label for="name">Name: </label>
-        <input type=text id="name" value="" name="name">
+        <input type=text id="name" value="${state.settings.peerNames[state.settings.key]}" name="name">
       </p>
       <p>
         <label for="downloadPath">Download path: </label>
@@ -6607,7 +6665,7 @@ function view (state, emit) {
     const peerId = request.recipients.find(r => r !== state.settings.key)
     const peer = peerId ? displayPeer(peerId) : 'unknown peer'
     const requested = fromSelf
-      ? h('span', 'you requested', peer, 's files: ')
+      ? h('span', 'you requested ', peer, 's files: ')
       : h('span', peer, ' requested files: ')
 
     return h('li',
@@ -6620,9 +6678,9 @@ function view (state, emit) {
 
   return basic(state, emit, html`
     <h3>Requests sent:</h3>
-    <ul>${state.request.fromSelf.map(displayRequest, true)}</ul>
+    <ul>${state.request.fromSelf.map(request => displayRequest(request, true))}</ul>
     <h3>Requests received:</h3>
-    <ul>${state.request.fromOthers.map(displayRequest, false)}</ul>
+    <ul>${state.request.fromOthers.map(request => displayRequest(request, false))}</ul>
     `)
 }
 
