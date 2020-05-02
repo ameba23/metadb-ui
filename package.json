@@ -17,8 +17,8 @@
     "axios": "^0.19.0",
     "browserify": "^16.5.0",
     "choo": "^6.13.3",
+    "choo-websocket": "^2.0.0",
     "hyperscript": "^2.0.2",
-    "request": "^2.88.0",
     "sheetify": "^7.4.0",
     "tachyons": "^4.11.1"
   },
