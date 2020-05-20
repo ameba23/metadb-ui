@@ -15,10 +15,13 @@ var app = choo()
 
 const defaultSettings = {
   host: 'http://localhost',
-  port: 3000
+  port: 2323
 }
+// TODO this would need to be updated when defaultsettings are updated
+const wsroute = defaultSettings.host.split('//')[1] + ':' + defaultSettings.port
 
 app.use(require('./stores')(defaultSettings))
+app.use(require('choo-websocket')(wsroute))
 
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
@@ -35,7 +38,7 @@ app.route('#transfers', require('./views/transfers'))
 
 module.exports = app.mount('body')
 
-},{"./stores":73,"./views/404":75,"./views/connection":77,"./views/file":78,"./views/files":79,"./views/peer":80,"./views/peers":81,"./views/search":82,"./views/settings":83,"./views/shares":84,"./views/subdir":85,"./views/transfers":86,"choo":36,"sheetify/insert":67}],2:[function(require,module,exports){
+},{"./stores":74,"./views/404":76,"./views/connection":78,"./views/file":79,"./views/files":80,"./views/peer":81,"./views/peers":82,"./views/search":83,"./views/settings":84,"./views/shares":85,"./views/subdir":86,"./views/transfers":87,"choo":37,"choo-websocket":34,"sheetify/insert":68}],2:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -545,7 +548,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"object-assign":62,"util/":5}],3:[function(require,module,exports){
+},{"object-assign":63,"util/":5}],3:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1167,7 +1170,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":4,"_process":64,"inherits":3}],6:[function(require,module,exports){
+},{"./support/isBuffer":4,"_process":65,"inherits":3}],6:[function(require,module,exports){
 module.exports = require('./lib/axios');
 },{"./lib/axios":8}],7:[function(require,module,exports){
 'use strict';
@@ -2035,7 +2038,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this,require('_process'))
-},{"./adapters/http":7,"./adapters/xhr":7,"./helpers/normalizeHeaderName":28,"./utils":31,"_process":64}],22:[function(require,module,exports){
+},{"./adapters/http":7,"./adapters/xhr":7,"./helpers/normalizeHeaderName":28,"./utils":31,"_process":65}],22:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -2833,6 +2836,74 @@ module.exports = (function split(undef) {
 })();
 
 },{}],34:[function(require,module,exports){
+/* global WebSocket */
+var assert = require('assert')
+
+module.exports = websocket
+
+var events = websocket.events = {
+  OPEN: 'ws:open',
+  CLOSE: 'ws:close',
+  SEND: 'ws:send',
+  MESSAGE: 'ws:message',
+  ADD_SOCKET: 'ws:add-socket',
+  ERROR: 'ws:error'
+}
+
+function websocket (route, opts) {
+  if (typeof route === 'object') {
+    opts = route
+    route = window.location.host
+  }
+  route = route || window.location.host
+  opts = opts || {}
+  assert.equal(typeof route, 'string', 'choo-websocket: route should be type string')
+  assert.equal(typeof opts, 'object', 'choo-websocket: opts should be type object')
+
+  return function (state, emitter) {
+    assert.equal(typeof state, 'object', 'choo-websocket: state should be type object')
+    assert.equal(typeof emitter, 'object', 'choo-websocket: emitter should be type object')
+
+    state.sockets = {}
+    createWebSocket(state, emitter, route, opts, 'default')
+    emitter.on(events.CLOSE, function (code, reason, id) {
+      // default close code is 1000
+      // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+      code = code || 1000
+      state.sockets[id || 'default'].close(code, reason)
+    })
+    emitter.on(events.SEND, function (data, id) {
+      console.log(data)
+      state.sockets[id || 'default'].send(data)
+    })
+    emitter.on(events.ADD_SOCKET, function (route, opts, id) {
+      createWebSocket(state, emitter, route, opts, id)
+    })
+  }
+}
+
+function createWebSocket (state, emitter, route, opts, id) {
+  var socket = null
+  id = id || (new Date() % 9e6).toString(36)
+  try {
+    socket = new WebSocket(`${opts.secure ? 'wss' : 'ws'}://${route}`, opts.protocols ? opts.protocols : undefined)
+    socket.addEventListener('open', function (event) {
+      state.sockets[id] = socket
+      emitter.emit(events.OPEN, event, id)
+    })
+    socket.addEventListener('close', function (event) {
+      emitter.emit(events.CLOSE, event, id)
+    })
+    socket.addEventListener('message', function (event) {
+      emitter.emit(events.MESSAGE, event.data, event, id)
+    })
+    return id
+  } catch (e) {
+    emitter.emit(events.ERROR, e)
+  }
+}
+
+},{"assert":2}],35:[function(require,module,exports){
 var assert = require('assert')
 var LRU = require('nanolru')
 
@@ -2875,10 +2946,10 @@ function newCall (Cls) {
   return new (Cls.bind.apply(Cls, arguments)) // eslint-disable-line
 }
 
-},{"assert":44,"nanolru":53}],35:[function(require,module,exports){
+},{"assert":45,"nanolru":54}],36:[function(require,module,exports){
 module.exports = require('nanohtml')
 
-},{"nanohtml":49}],36:[function(require,module,exports){
+},{"nanohtml":50}],37:[function(require,module,exports){
 var scrollToAnchor = require('scroll-to-anchor')
 var documentReady = require('document-ready')
 var nanotiming = require('nanotiming')
@@ -3151,7 +3222,7 @@ Choo.prototype._setCache = function (state) {
   }
 }
 
-},{"./component/cache":34,"assert":44,"document-ready":38,"nanobus":45,"nanohref":46,"nanomorph":54,"nanoquery":57,"nanoraf":58,"nanorouter":59,"nanotiming":61,"scroll-to-anchor":66,"xtend":70}],37:[function(require,module,exports){
+},{"./component/cache":35,"assert":45,"document-ready":39,"nanobus":46,"nanohref":47,"nanomorph":55,"nanoquery":58,"nanoraf":59,"nanorouter":60,"nanotiming":62,"scroll-to-anchor":67,"xtend":71}],38:[function(require,module,exports){
 // contains, add, remove, toggle
 var indexof = require('indexof')
 
@@ -3252,7 +3323,7 @@ function isTruthy(value) {
     return !!value
 }
 
-},{"indexof":42}],38:[function(require,module,exports){
+},{"indexof":43}],39:[function(require,module,exports){
 'use strict'
 
 module.exports = ready
@@ -3271,7 +3342,7 @@ function ready (callback) {
   })
 }
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = attributeToProperty
 
 var transform = {
@@ -3292,7 +3363,7 @@ function attributeToProperty (h) {
   }
 }
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var split = require('browser-split')
 var ClassList = require('class-list')
 
@@ -3454,7 +3525,7 @@ function isArray (arr) {
 
 
 
-},{"browser-split":33,"class-list":37,"html-element":32}],41:[function(require,module,exports){
+},{"browser-split":33,"class-list":38,"html-element":32}],42:[function(require,module,exports){
 var attrToProp = require('hyperscript-attribute-to-property')
 
 var VAR = 0, TEXT = 1, OPEN = 2, CLOSE = 3, ATTR = 4
@@ -3751,7 +3822,7 @@ var closeRE = RegExp('^(' + [
 ].join('|') + ')(?:[\.#][a-zA-Z0-9\u007F-\uFFFF_:-]+)*$')
 function selfClosing (tag) { return closeRE.test(tag) }
 
-},{"hyperscript-attribute-to-property":39}],42:[function(require,module,exports){
+},{"hyperscript-attribute-to-property":40}],43:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -3762,7 +3833,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 var containers = []; // will store container HTMLElement references
 var styleElements = []; // will store {prepend: HTMLElement, append: HTMLElement}
 
@@ -3822,7 +3893,7 @@ function createStyleElement() {
 module.exports = insertCss;
 module.exports.insertCss = insertCss;
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 assert.notEqual = notEqual
 assert.notOk = notOk
 assert.equal = equal
@@ -3846,7 +3917,7 @@ function assert (t, m) {
   if (!t) throw new Error(m || 'AssertionError')
 }
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 var splice = require('remove-array-items')
 var nanotiming = require('nanotiming')
 var assert = require('assert')
@@ -4010,7 +4081,7 @@ Nanobus.prototype._emit = function (arr, eventName, data, uuid) {
   }
 }
 
-},{"assert":44,"nanotiming":61,"remove-array-items":65}],46:[function(require,module,exports){
+},{"assert":45,"nanotiming":62,"remove-array-items":66}],47:[function(require,module,exports){
 var assert = require('assert')
 
 var safeExternalLink = /(noopener|noreferrer) (noopener|noreferrer)/
@@ -4055,7 +4126,7 @@ function href (cb, root) {
   })
 }
 
-},{"assert":44}],47:[function(require,module,exports){
+},{"assert":45}],48:[function(require,module,exports){
 'use strict'
 
 var trailingNewlineRegex = /\n[\s]+$/
@@ -4189,7 +4260,7 @@ module.exports = function appendChild (el, childs) {
   }
 }
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict'
 
 module.exports = [
@@ -4199,17 +4270,17 @@ module.exports = [
   'readonly', 'required', 'reversed', 'selected'
 ]
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = require('./dom')(document)
 
-},{"./dom":51}],50:[function(require,module,exports){
+},{"./dom":52}],51:[function(require,module,exports){
 'use strict'
 
 module.exports = [
   'indeterminate'
 ]
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict'
 
 var hyperx = require('hyperx')
@@ -4327,7 +4398,7 @@ module.exports = function (document) {
   return exports
 }
 
-},{"./append-child":47,"./bool-props":48,"./direct-props":50,"./svg-tags":52,"hyperx":41}],52:[function(require,module,exports){
+},{"./append-child":48,"./bool-props":49,"./direct-props":51,"./svg-tags":53,"hyperx":42}],53:[function(require,module,exports){
 'use strict'
 
 module.exports = [
@@ -4347,7 +4418,7 @@ module.exports = [
   'tspan', 'use', 'view', 'vkern'
 ]
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = LRU
 
 function LRU (opts) {
@@ -4485,7 +4556,7 @@ LRU.prototype.evict = function () {
   this.remove(this.tail)
 }
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var assert = require('nanoassert')
 var morph = require('./lib/morph')
 
@@ -4650,7 +4721,7 @@ function same (a, b) {
   return false
 }
 
-},{"./lib/morph":56,"nanoassert":44}],55:[function(require,module,exports){
+},{"./lib/morph":57,"nanoassert":45}],56:[function(require,module,exports){
 module.exports = [
   // attribute events (can be set with attributes)
   'onclick',
@@ -4694,7 +4765,7 @@ module.exports = [
   'onfocusout'
 ]
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var events = require('./events')
 var eventsLength = events.length
 
@@ -4860,7 +4931,7 @@ function updateAttribute (newNode, oldNode, name) {
   }
 }
 
-},{"./events":55}],57:[function(require,module,exports){
+},{"./events":56}],58:[function(require,module,exports){
 var reg = /([^?=&]+)(=([^&]*))?/g
 var assert = require('assert')
 
@@ -4884,7 +4955,7 @@ function qs (url) {
   return obj
 }
 
-},{"assert":44}],58:[function(require,module,exports){
+},{"assert":45}],59:[function(require,module,exports){
 'use strict'
 
 var assert = require('assert')
@@ -4921,7 +4992,7 @@ function nanoraf (render, raf) {
   }
 }
 
-},{"assert":44}],59:[function(require,module,exports){
+},{"assert":45}],60:[function(require,module,exports){
 var assert = require('assert')
 var wayfarer = require('wayfarer')
 
@@ -4977,7 +5048,7 @@ function pathname (routename, isElectron) {
   return decodeURI(routename.replace(suffix, '').replace(normalize, '/'))
 }
 
-},{"assert":44,"wayfarer":68}],60:[function(require,module,exports){
+},{"assert":45,"wayfarer":69}],61:[function(require,module,exports){
 var assert = require('assert')
 
 var hasWindow = typeof window !== 'undefined'
@@ -5034,7 +5105,7 @@ NanoScheduler.prototype.setTimeout = function (cb) {
 
 module.exports = createScheduler
 
-},{"assert":44}],61:[function(require,module,exports){
+},{"assert":45}],62:[function(require,module,exports){
 var scheduler = require('nanoscheduler')()
 var assert = require('assert')
 
@@ -5084,7 +5155,7 @@ function noop (cb) {
   }
 }
 
-},{"assert":44,"nanoscheduler":60}],62:[function(require,module,exports){
+},{"assert":45,"nanoscheduler":61}],63:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -5176,7 +5247,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 (function (process){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
@@ -5482,7 +5553,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":64}],64:[function(require,module,exports){
+},{"_process":65}],65:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5668,7 +5739,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict'
 
 /**
@@ -5697,7 +5768,7 @@ module.exports = function removeItems (arr, startIdx, removeCount) {
   arr.length = len
 }
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = scrollToAnchor
 
 function scrollToAnchor (anchor, options) {
@@ -5709,10 +5780,10 @@ function scrollToAnchor (anchor, options) {
   }
 }
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = require('insert-css')
 
-},{"insert-css":43}],68:[function(require,module,exports){
+},{"insert-css":44}],69:[function(require,module,exports){
 var assert = require('assert')
 var trie = require('./trie')
 
@@ -5791,7 +5862,7 @@ function Wayfarer (dft) {
   }
 }
 
-},{"./trie":69,"assert":2}],69:[function(require,module,exports){
+},{"./trie":70,"assert":2}],70:[function(require,module,exports){
 var mutate = require('xtend/mutable')
 var assert = require('assert')
 var xtend = require('xtend')
@@ -5929,7 +6000,7 @@ Trie.prototype.mount = function (route, trie) {
   }
 }
 
-},{"assert":2,"xtend":70,"xtend/mutable":71}],70:[function(require,module,exports){
+},{"assert":2,"xtend":71,"xtend/mutable":72}],71:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -5950,7 +6021,7 @@ function extend() {
     return target
 }
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -5969,7 +6040,7 @@ function extend(target) {
     return target
 }
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 const axios = require('axios')
 
 module.exports = function createRequest ({ host, port, timeout }) {
@@ -5981,7 +6052,7 @@ module.exports = function createRequest ({ host, port, timeout }) {
   })
 }
 
-},{"axios":6}],73:[function(require,module,exports){
+},{"axios":6}],74:[function(require,module,exports){
 const createRequest = require('../request')
 
 module.exports = function createStores (defaultSettings) {
@@ -5991,8 +6062,28 @@ module.exports = function createStores (defaultSettings) {
     state.settings = {
       connectedPeers: []
     }
+    state.wsEvents = {}
+
     state.connectionSettings = defaultSettings
     const request = createRequest(state.connectionSettings)
+
+    emitter.on('ws:open', () => {
+      console.log('ws: Connection established')
+    })
+
+    emitter.on('ws:message', (data, event) => {
+      console.log('ws:', data) // temp
+      try {
+        const message = JSON.parse(data)
+        Object.assign(state.wsEvents, message)
+        // TODO this means we will be constantly rendering when
+        // downloading/uploading. we should only render if we are
+        // on the relevant view
+        emitter.emit('render')
+      } catch (err) {
+        if (err) console.log('Error parsing ws message', err) // TODO
+      }
+    })
 
     emitter.on('navigate', (d) => {
       console.log('navigate', state.route)
@@ -6126,7 +6217,7 @@ module.exports = function createStores (defaultSettings) {
   }
 }
 
-},{"../request":72}],74:[function(require,module,exports){
+},{"../request":73}],75:[function(require,module,exports){
 function readableBytes (bytes) {
   if (bytes < 1) return 0 + ' B'
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
@@ -6157,7 +6248,7 @@ function createOnSubmit (requestFn, route, emit, event) {
 
 module.exports = { readableBytes, formData, createOnSubmit }
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 var html = require('choo/html')
 const basic = require('./basic')
 
@@ -6173,7 +6264,7 @@ function view (state, emit) {
   `)
 }
 
-},{"./basic":76,"choo/html":35}],76:[function(require,module,exports){
+},{"./basic":77,"choo/html":36}],77:[function(require,module,exports){
 const createRequest = require('../request')
 const h = require('hyperscript')
 const { formData, readableBytes } = require('../util')
@@ -6242,7 +6333,7 @@ module.exports = function (state, emit, content) {
   }
 }
 
-},{"../request":72,"../util":74,"hyperscript":40}],77:[function(require,module,exports){
+},{"../request":73,"../util":75,"hyperscript":41}],78:[function(require,module,exports){
 const html = require('choo/html')
 const createRequest = require('../request')
 const { formData } = require('../util')
@@ -6256,10 +6347,12 @@ function view (state, emit) {
     <h3>Connections</h3>
     <ul>${state.settings.connections.map(showConnection)}</ul>
     <form id="swarmtopic" onsubmit=${onSubmit}>
-      <label for="swarm">Join new swarm: (by name or key)</label>
+      <label for="swarm">Join or create swarm: (by name or key)</label>
       <input type=text id="swarm" value="" name="swarm">
       <input type=submit value="Connect to swarm">
     </form>
+    <button onclick=${createPrivateSwarm}>Create private swarm</button>
+    <button onclick=${tryWs}>Try websockets</button>
   `)
 
   function onSubmit (e) {
@@ -6271,6 +6364,18 @@ function view (state, emit) {
         emit('updateConnection', res)
       })
       .catch(console.log) // TODO
+  }
+
+  function createPrivateSwarm () {
+    request.post('/swarm', {})
+      .then((res) => {
+        emit('updateConnection', res)
+      })
+      .catch(console.log) // TODO
+  }
+
+  function tryWs () {
+    emit('ws:send', 'something')
   }
 
   function showConnection (connection) {
@@ -6289,14 +6394,15 @@ function view (state, emit) {
   }
 }
 
-},{"../request":72,"../util":74,"./basic":76,"choo/html":35}],78:[function(require,module,exports){
+},{"../request":73,"../util":75,"./basic":77,"choo/html":36}],79:[function(require,module,exports){
 const html = require('choo/html')
+const path = require('path')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
 const createRequest = require('../request')
 const { formData } = require('../util')
-
 const basic = require('./basic')
+
 module.exports = view
 
 var depth = 0 // TODO is this needed?
@@ -6342,11 +6448,18 @@ function view (state, emit) {
   }
 
   function requestContainingDirectory () {
-    // request.post('/request', { files: [file.sha256] })
-    //   .then((res) => {
-    //     emit('transfers', res) // TODO: dont acutally need to pass res
-    //   })
-    //   .catch(console.log) // TODO
+    const subdir = Array.isArray(file.filename)
+      ? path.dirname(file.filename[0]) // TODO how to handle multiple possible dirs
+      : path.dirname(file.filename)
+    request.post('/files/subdir', { subdir })
+      .then((res) => {
+        const files = res.data.map(f => f.sha256)
+        request.post('/request', { files })
+          .then((res) => {
+            emit('transfers', res) // TODO: dont acutally need to pass res
+          })
+          .catch(console.log) // TODO
+      }).catch(console.log)
   }
 
   function displayKey (key) {
@@ -6379,6 +6492,11 @@ function view (state, emit) {
         `
     }
 
+    if (key === 'pdfText') {
+      value = value.replace(/(?:\r\n|\r|\n)/g, '<br>')
+        .split('<br>').map(line => html`${line}<br>`)
+    }
+
     if (key === 'timestamp' && typeof value === 'number') {
       key = 'Added'
       value = Date(value)
@@ -6392,7 +6510,7 @@ function view (state, emit) {
   }
 }
 
-},{"../request":72,"../util":74,"./basic":76,"choo/html":35}],79:[function(require,module,exports){
+},{"../request":73,"../util":75,"./basic":77,"choo/html":36,"path":64}],80:[function(require,module,exports){
 const html = require('choo/html')
 const h = require('hyperscript')
 const TITLE = 'metadb'
@@ -6499,7 +6617,7 @@ function filesView (state, emit, files, noFilesMessage) {
   // }
 }
 
-},{"../request":72,"../util":74,"./basic":76,"choo/html":35,"hyperscript":40,"path":63}],80:[function(require,module,exports){
+},{"../request":73,"../util":75,"./basic":77,"choo/html":36,"hyperscript":41,"path":64}],81:[function(require,module,exports){
 const html = require('choo/html')
 const TITLE = 'metadb - peers'
 const basic = require('./basic')
@@ -6522,7 +6640,7 @@ function view (state, emit) {
   }
 }
 
-},{"./basic":76,"./files":79,"choo/html":35}],81:[function(require,module,exports){
+},{"./basic":77,"./files":80,"choo/html":36}],82:[function(require,module,exports){
 const h = require('hyperscript')
 const basic = require('./basic')
 const { readableBytes } = require('../util')
@@ -6548,7 +6666,7 @@ function view (state, emit) {
   return basic(state, emit, h('ul', state.peers.map(displayPeer)))
 }
 
-},{"../util":74,"./basic":76,"hyperscript":40}],82:[function(require,module,exports){
+},{"../util":75,"./basic":77,"hyperscript":41}],83:[function(require,module,exports){
 const { filesView } = require('./files')
 const basic = require('./basic')
 
@@ -6557,7 +6675,7 @@ function view (state, emit) {
   return basic(state, emit, filesView(state, emit, 'files'))
 }
 
-},{"./basic":76,"./files":79}],83:[function(require,module,exports){
+},{"./basic":77,"./files":80}],84:[function(require,module,exports){
 const html = require('choo/html')
 const createRequest = require('../request')
 const { formData } = require('../util')
@@ -6577,6 +6695,7 @@ function view (state, emit) {
       <p>
         <label for="downloadPath">Download path: </label>
         <input type="text" id="downloadPath" value="${state.settings.downloadPath}" name="downloadPath">
+        <a href="file://${state.settings.downloadPath}">Open downloadpath locally</a>
       </p>
       <input type=submit value="Update settings">
     </form>
@@ -6594,7 +6713,7 @@ function view (state, emit) {
   }
 }
 
-},{"../request":72,"../util":74,"./basic":76,"choo/html":35}],84:[function(require,module,exports){
+},{"../request":73,"../util":75,"./basic":77,"choo/html":36}],85:[function(require,module,exports){
 const basic = require('./basic')
 const createRequest = require('../request')
 const html = require('choo/html')
@@ -6629,9 +6748,9 @@ function view (state, emit) {
   }
 }
 
-},{"../request":72,"../util":74,"./basic":76,"./files":79,"choo/html":35}],85:[function(require,module,exports){
-arguments[4][82][0].apply(exports,arguments)
-},{"./basic":76,"./files":79,"dup":82}],86:[function(require,module,exports){
+},{"../request":73,"../util":75,"./basic":77,"./files":80,"choo/html":36}],86:[function(require,module,exports){
+arguments[4][83][0].apply(exports,arguments)
+},{"./basic":77,"./files":80,"dup":83}],87:[function(require,module,exports){
 const html = require('choo/html')
 const TITLE = 'metadb - transfers'
 const basic = require('./basic')
@@ -6676,14 +6795,28 @@ function view (state, emit) {
     )
   }
 
+  function displayDownloadingFile (name) {
+    const properties = state.wsEvents.download[name]
+    if (properties.downloaded) return html`<li>${name}: Download Complete</li>`
+    if (properties.verified) return html`<li>${name}: Download Complete. File Verified</li>`
+    return html`
+      <li>${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes.</li>
+    `
+  }
+
   return basic(state, emit, html`
     <h3>Requests sent:</h3>
     <ul>${state.request.fromSelf.map(request => displayRequest(request, true))}</ul>
+    <h3>Current downloads:</h3>
+    <ul>${state.wsEvents.download
+    ? Object.keys(state.wsEvents.download).map(displayDownloadingFile)
+    : null}
+    </ul>
     <h3>Requests received:</h3>
     <ul>${state.request.fromOthers.map(request => displayRequest(request, false))}</ul>
     `)
 }
 
-},{"./basic":76,"choo/html":35,"hyperscript":40}]},{},[1]);
+},{"./basic":77,"choo/html":36,"hyperscript":41}]},{},[1]);
 </script>
 </html>

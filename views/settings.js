@@ -17,6 +17,7 @@ function view (state, emit) {
       <p>
         <label for="downloadPath">Download path: </label>
         <input type="text" id="downloadPath" value="${state.settings.downloadPath}" name="downloadPath">
+        <a href="file://${state.settings.downloadPath}">Open downloadpath locally</a>
       </p>
       <input type=submit value="Update settings">
     </form>

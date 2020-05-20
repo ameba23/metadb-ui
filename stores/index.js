@@ -7,8 +7,28 @@ module.exports = function createStores (defaultSettings) {
     state.settings = {
       connectedPeers: []
     }
+    state.wsEvents = {}
+
     state.connectionSettings = defaultSettings
     const request = createRequest(state.connectionSettings)
+
+    emitter.on('ws:open', () => {
+      console.log('ws: Connection established')
+    })
+
+    emitter.on('ws:message', (data, event) => {
+      console.log('ws:', data) // temp
+      try {
+        const message = JSON.parse(data)
+        Object.assign(state.wsEvents, message)
+        // TODO this means we will be constantly rendering when
+        // downloading/uploading. we should only render if we are
+        // on the relevant view
+        emitter.emit('render')
+      } catch (err) {
+        if (err) console.log('Error parsing ws message', err) // TODO
+      }
+    })
 
     emitter.on('navigate', (d) => {
       console.log('navigate', state.route)

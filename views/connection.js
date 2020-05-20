@@ -11,10 +11,11 @@ function view (state, emit) {
     <h3>Connections</h3>
     <ul>${state.settings.connections.map(showConnection)}</ul>
     <form id="swarmtopic" onsubmit=${onSubmit}>
-      <label for="swarm">Join new swarm: (by name or key)</label>
+      <label for="swarm">Join or create swarm: (by name or key)</label>
       <input type=text id="swarm" value="" name="swarm">
       <input type=submit value="Connect to swarm">
     </form>
+    <button onclick=${createPrivateSwarm}>Create private swarm</button>
   `)
 
   function onSubmit (e) {
@@ -22,6 +23,14 @@ function view (state, emit) {
     var form = e.currentTarget
     var thing = formData(form)
     request.post('/swarm', thing)
+      .then((res) => {
+        emit('updateConnection', res)
+      })
+      .catch(console.log) // TODO
+  }
+
+  function createPrivateSwarm () {
+    request.post('/swarm', {})
       .then((res) => {
         emit('updateConnection', res)
       })

@@ -95,6 +95,11 @@ function view (state, emit) {
         `
     }
 
+    if (key === 'pdfText') {
+      value = value.replace(/(?:\r\n|\r|\n)/g, '<br>')
+        .split('<br>').map(line => html`${line}<br>`)
+    }
+
     if (key === 'timestamp' && typeof value === 'number') {
       key = 'Added'
       value = Date(value)

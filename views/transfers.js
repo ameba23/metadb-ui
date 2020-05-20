@@ -42,9 +42,26 @@ function view (state, emit) {
     )
   }
 
+  function displayDownloadingFile (name) {
+    const properties = state.wsEvents.download[name]
+    if (properties.downloaded) return html`<li>${name}: Download Complete</li>`
+    if (properties.verified) return html`<li>${name}: Download Complete. File Verified</li>`
+    const bytesRecieved = properties.bytesRecieved || 0
+    const size = properties.size || 0
+    const percentage = Math.round(bytesRecieved / size * 100)
+    return html`
+      <li>${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).</li>
+    `
+  }
+
   return basic(state, emit, html`
     <h3>Requests sent:</h3>
     <ul>${state.request.fromSelf.map(request => displayRequest(request, true))}</ul>
+    <h3>Current downloads:</h3>
+    <ul>${state.wsEvents.download
+    ? Object.keys(state.wsEvents.download).map(displayDownloadingFile)
+    : null}
+    </ul>
     <h3>Requests received:</h3>
     <ul>${state.request.fromOthers.map(request => displayRequest(request, false))}</ul>
     `)

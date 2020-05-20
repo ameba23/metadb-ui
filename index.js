@@ -7,10 +7,13 @@ var app = choo()
 
 const defaultSettings = {
   host: 'http://localhost',
-  port: 3000
+  port: 2323
 }
+// TODO this would need to be updated when defaultsettings are updated
+const wsroute = defaultSettings.host.split('//')[1] + ':' + defaultSettings.port
 
 app.use(require('./stores')(defaultSettings))
+app.use(require('choo-websocket')(wsroute))
 
 app.route('/*', require('./views/404'))
 app.route('/', require('./views/files'))
