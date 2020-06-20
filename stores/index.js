@@ -92,23 +92,19 @@ module.exports = function createStores (defaultSettings) {
 
     state.shares = []
     emitter.on('shares', () => {
-      request.get('/files/shares')
-        .then((response) => {
-          state.connectionError = false
-          state.files = response.data
-          emitter.emit('render')
-        }).catch(handleError)
+      request.get('/files/shares').then((response) => {
+        state.connectionError = false
+        state.files = response.data
+        emitter.emit('render')
+      }).catch(handleError)
     })
 
     emitter.on('transfers', (res) => {
-      request.get('/request/fromSelf').then((response) => {
+      request.get('/request').then((response) => {
         state.connectionError = false
-        state.request.fromSelf = response.data
-        request.get('/request/fromOthers').then((response) => {
-          state.request.fromOthers = response.data
-          emitter.emit('render')
-        }).catch(handleError)
-      })
+        state.request = response.data
+        emitter.emit('render')
+      }).catch(handleError)
     })
     emitter.emit('transfers')
 
