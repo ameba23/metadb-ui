@@ -16,9 +16,14 @@ function view (state, emit) {
        <input type="text" id="dir" value="${state.settings.homeDir}" name="dir" size="60">
        <input type=submit value="Begin indexing">
     </form>
+    <p>${state.wsEvents.indexer}</p>
     ${filesView(state, emit, 'files')}
     `
   )
+// <textarea readonly="readonly">
+// <pre><code>
+// </code></pre>
+// </textarea>
 
   function onSubmit (e) {
     e.preventDefault()

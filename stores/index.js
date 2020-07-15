@@ -4,9 +4,7 @@ module.exports = function createStores (defaultSettings) {
   return function (state, emitter) {
     state.files = []
     state.peers = []
-    state.settings = {
-      connectedPeers: []
-    }
+    state.settings = {}
     state.wsEvents = {}
 
     state.connectionSettings = defaultSettings
@@ -20,6 +18,9 @@ module.exports = function createStores (defaultSettings) {
       console.log('ws:', data) // temp
       try {
         const message = JSON.parse(data)
+        if (message.indexer) {
+          state.wsEvents.indexerLog += message.indexer
+        }
         Object.assign(state.wsEvents, message)
         // TODO this means we will be constantly rendering when
         // downloading/uploading. we should only render if we are
@@ -114,12 +115,13 @@ module.exports = function createStores (defaultSettings) {
     })
 
     emitter.on('updateConnection', (res) => {
-      state.settings.connections = res.data
+      state.settings.swarms = res.data
       emitter.emit('render')
     })
 
     emitter.on('updateSettings', (res) => {
       state.settings = res.data
+      state.wsEvents.connectedPeers = state.settings.connectedPeers
       emitter.emit('render')
     })
 
@@ -128,10 +130,10 @@ module.exports = function createStores (defaultSettings) {
       emitter.emit('replaceState', '#subdir')
     })
 
-    state.request = {
-      fromSelf: [],
-      fromOthers: []
-    }
+    // state.request = {
+    //   fromSelf: [],
+    //   fromOthers: []
+    // }
 
     emitter.on('settings', () => {
       request.get('/settings')

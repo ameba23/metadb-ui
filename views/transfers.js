@@ -15,16 +15,20 @@ function view (state, emit) {
     <ul>${state.request.map(displayWishListItem)}</ul>
     <h3>Current downloads:</h3>
     <ul>${state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).map(displayDownloadingFile)
+    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded).map(displayDownloadingFile)
     : null}
     </ul>
     <h3>Requests received:</h3>
-    <ul></ul>
+    <ul><li>${JSON.stringify(state.wsEvents.uploadQueue)}</li></ul>
+    <h3>Downloaded:</h3>
+    <ul>
+    ${state.wsEvents.download
+    ? Object.keys(state.wsEvents.download).filter(f => state.wsEvents.download[f].downloaded).map(displayDownloadingFile)
+    : null}
+    </ul>
     `)
 
-  // function displayTimestamp (timestamp) {
-  //   return new Date(timestamp).toLocaleString()
-  // }
+  // <ul>${state......map(displayDownloadedFile)}</ul>
 
   function displayPeer (feedId) {
     const peer = state.peers.find(p => p.feedId === feedId)
@@ -36,16 +40,16 @@ function view (state, emit) {
     // TODO
     return h('li',
       h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
-      ' held by: ', file.holders.map(displayPeer),
-      h('button', { onclick: unrequest(file.sha256) }, 'Remove from wishlist')
+      ' held by: ', file.holders.map(displayPeer)
+      // h('button', { onclick: unrequest(file.sha256) }, 'Remove from wishlist')
     )
   }
 
   function unrequest (files) {
     if (!Array.isArray(files)) files = [files]
-    request.delete('/request', { files })
+    request.delete('/request', { data: { files } })
       .then((res) => {
-        emit('updateConnection', res)
+        emit('transfers')
       })
       .catch(console.log) // TODO
   }

@@ -1,4 +1,5 @@
 const html = require('choo/html')
+const h = require('hyperscript')
 const path = require('path')
 const TITLE = 'metadb'
 const { readableBytes } = require('../util')
@@ -15,7 +16,13 @@ function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const file = state.file
   if (file) {
-    return basic(state, emit, html`
+    if (file.dir) {
+      return basic(state, emit, h('div',
+        h('h3', file.dir),
+        h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request directory')
+      ))
+    } else {
+      return basic(state, emit, html`
       <h3>${file.filename.toString()}</h3>
       <button type="button" onclick="${requestFile}">Request file</button>
       <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
@@ -26,6 +33,7 @@ function view (state, emit) {
       </form>
       <button>star</button>
     `)
+    }
   } else {
     return basic(state, emit, html`<p>File not found</p>`)
   }
@@ -50,10 +58,17 @@ function view (state, emit) {
       .catch(console.log) // TODO
   }
 
+
   function requestContainingDirectory () {
-    const subdir = Array.isArray(file.filename)
-      ? path.dirname(file.filename[0]) // TODO how to handle multiple possible dirs
-      : path.dirname(file.filename)
+    let subdir
+    if (file.filename) {
+      subdir = Array.isArray(file.filename)
+        ? path.dirname(file.filename[0]) // TODO how to handle multiple possible dirs
+        : path.dirname(file.filename)
+    } else if (file.dir) {
+      subdir = file.dir
+    }
+
     request.post('/files/subdir', { subdir })
       .then((res) => {
         const files = res.data.map(f => f.sha256)
@@ -95,7 +110,7 @@ function view (state, emit) {
         `
     }
 
-    if (key === 'pdfText') {
+    if (key === 'text' || key === 'pdfText') {
       value = value.replace(/(?:\r\n|\r|\n)/g, '<br>')
         .split('<br>').map(line => html`${line}<br>`)
     }
