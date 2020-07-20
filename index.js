@@ -6,11 +6,13 @@ css('tachyons')
 var app = choo()
 
 const defaultSettings = {
-  host: 'http://localhost',
-  port: 2323
+  host: `http://${process.env.host || 'localhost'}`,
+  port: process.env.port || 2323
 }
+
 // TODO this would need to be updated when defaultsettings are updated
 const wsroute = defaultSettings.host.split('//')[1] + ':' + defaultSettings.port
+console.log(wsroute)
 
 app.use(require('./stores')(defaultSettings))
 app.use(require('choo-websocket')(wsroute))

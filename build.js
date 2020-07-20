@@ -1,6 +1,10 @@
 const browserify = require('browserify')
 const sheetify = require('sheetify')
 const indexhtmlify = require('indexhtmlify')
+const envify = require('envify/custom')
 
-const b = browserify('./index.js', { transform: [ sheetify ] })
-b.bundle().pipe(indexhtmlify()).pipe(process.stdout)
+module.exports = function (options) {
+  return browserify(require.resolve('./index.js'), {
+    transform: [ sheetify, envify(options) ]
+  }).bundle().pipe(indexhtmlify())
+}
