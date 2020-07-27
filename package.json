@@ -8,9 +8,6 @@
     "test": "standard && npm run test-deps",
     "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
   },
-  "files": [
-    "dist/index.html"
-  ],
   "author": "ameba23",
   "license": "AGPL-3.0-only",
   "dependencies": {
