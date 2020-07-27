@@ -21,8 +21,7 @@ module.exports = function (state, emit, content) {
       )),
     h('p', `${state.settings.filesInDb || '?'} files in db (${readableBytes(state.settings.bytesInDb || 0)}). ${displayConnections()} ${displayConnectedPeers()}`),
     // h('p', `${JSON.stringify(state.wsEvents)}`),
-    // h('div', { class: 'bg-pink pa3 h-100 w-100' }, 'hello'),
-    h('h1.bg-pink.pa3.h-100.w-100.tc.red', 'hello'),
+    // h('h1.bg-pink.pa3.h-100.w-100.tc.red', 'hello'),
     h('hr'),
     state.connectionError ? connectionError : undefined,
     content
