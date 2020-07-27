@@ -21,6 +21,11 @@ module.exports = function createStores (defaultSettings) {
         if (message.indexer) {
           state.wsEvents.indexerLog += message.indexer
         }
+
+        if (message.download && message.download.downloadComplete) {
+          emitter.emit('transfers')
+        }
+
         Object.assign(state.wsEvents, message)
         // TODO this means we will be constantly rendering when
         // downloading/uploading. we should only render if we are
@@ -129,11 +134,6 @@ module.exports = function createStores (defaultSettings) {
       state.files = res.data
       emitter.emit('replaceState', '#subdir')
     })
-
-    // state.request = {
-    //   fromSelf: [],
-    //   fromOthers: []
-    // }
 
     emitter.on('settings', () => {
       request.get('/settings')

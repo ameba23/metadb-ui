@@ -15,7 +15,9 @@ function view (state, emit) {
     <ul>${state.request.map(displayWishListItem)}</ul>
     <h3>Current downloads:</h3>
     <ul>${state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded).map(displayDownloadingFile)
+    ? Object.keys(state.wsEvents.download)
+      .filter(f => !state.wsEvents.download[f].downloaded)
+      .map(displayDownloadingFile)
     : null}
     </ul>
     <h3>Requests received:</h3>
@@ -23,7 +25,9 @@ function view (state, emit) {
     <h3>Downloaded:</h3>
     <ul>
     ${state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).filter(f => state.wsEvents.download[f].downloaded).map(displayDownloadingFile)
+    ? Object.keys(state.wsEvents.download)
+      .filter(f => state.wsEvents.download[f].downloaded)
+      .map(displayCompleteFile)
     : null}
     </ul>
     `)
@@ -54,10 +58,16 @@ function view (state, emit) {
       .catch(console.log) // TODO
   }
 
+  function displayCompleteFile (name) {
+    const properties = state.wsEvents.download[name]
+    const verifiedMessage = properties.verified
+      ? 'File Verified.'
+      : properties.cannotVerify ? 'HASH DOES NOT MATCH' : ''
+    return html`<li>${name} ${verifiedMessage}</li>`
+  }
+
   function displayDownloadingFile (name) {
     const properties = state.wsEvents.download[name]
-    if (properties.downloaded) return html`<li>${name}: Download Complete</li>`
-    if (properties.verified) return html`<li>${name}: Download Complete. File Verified</li>`
     const bytesRecieved = properties.bytesRecieved || 0
     const size = properties.size || 0
     const percentage = Math.round(bytesRecieved / size * 100)

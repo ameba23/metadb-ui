@@ -52,7 +52,7 @@ function filesView (state, emit, files, noFilesMessage) {
     }
   }
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
-    h('table',
+    h('table.striped--moon-gray:nth-child',
       h('tr',
         h('th', 'Filename'),
         h('th', 'MIME type'),
