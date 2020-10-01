@@ -17,9 +17,8 @@ function view (state, emit) {
   return basic(state, emit, filesView(state, emit, 'files', noFiles))
 }
 
-function filesView (state, emit, files, noFilesMessage) {
+function filesView (state, emit, files, noFilesMessage, options = {}) {
   const request = createRequest(state.connectionSettings)
-
   noFilesMessage = noFilesMessage || h('p', 'No files to display')
 
   function tableLine (file) {
@@ -57,10 +56,10 @@ function filesView (state, emit, files, noFilesMessage) {
   }
 
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
-    state.subdirQuery
+    options.subdirQuery
       ? h('h2',
         h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
-        state.subdirQuery.split('/').map(subdir)
+        options.subdirQuery.split('/').map(subdir)
       )
       : h('span'),
     h('table.striped--moon-gray:nth-child',
