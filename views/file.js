@@ -2,9 +2,8 @@ const html = require('choo/html')
 const h = require('hyperscript')
 const path = require('path')
 const TITLE = 'metadb'
-const { readableBytes } = require('../util')
 const createRequest = require('../request')
-const { formData } = require('../util')
+const { readableBytes, secondsToHms, formData } = require('../util')
 const basic = require('./basic')
 
 module.exports = view
@@ -22,20 +21,27 @@ function view (state, emit) {
         h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request directory')
       ))
     } else {
-      return basic(state, emit, html`
-      <h3>${file.filename.toString()}</h3>
-      <button type="button" onclick="${requestFile}">Request file</button>
-      <button type="button" onclick="${requestContainingDirectory}">Request containing directory</button>
-      ${item(null, file)}
-      <form id="comment" onsubmit=${onSubmitComment}>
-        <input type=text id="comment" value="" name="comment">
-        <input type=submit value="add comment">
-      </form>
-      <button>star</button>
-    `)
+      const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
+      return basic(state, emit, h('div',
+        h('h3', filenames.map((filename) => {
+          return h('span',
+            h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
+            path.dirname(filename).split('/').map(subdir),
+            path.basename(filename)
+          )
+        })),
+        h('button', { type: 'button', onclick: requestFile }, 'Request file'),
+        h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request containing directory'),
+        item(null, file),
+        h('form', { id: 'comment', onsubmit: onSubmitComment },
+          h('input', { type: 'text', id: 'comment', value: '', name: 'comment' }),
+          h('input', { type: 'submit', value: 'add comment' })
+        ),
+        h('button', 'star')
+      ))
     }
   } else {
-    return basic(state, emit, html`<p>File not found</p>`)
+    return basic(state, emit, h('p', 'File not found'))
   }
 
   function onSubmitComment (e) {
@@ -57,7 +63,6 @@ function view (state, emit) {
       })
       .catch(console.log) // TODO
   }
-
 
   function requestContainingDirectory () {
     let subdir
@@ -81,23 +86,22 @@ function view (state, emit) {
   }
 
   function displayKey (key) {
-    if (key) { return html`<li><b>${key}:</b></li>` }
+    if (key) return h('li', h('strong', `${key}:`))
   }
 
   function displayPeer (peer) {
     const peerName = state.settings.peerNames
       ? state.settings.peerNames[peer] || peer
       : peer
-    return html`<li><a href="#peers/${peer}">${peerName}</a></li>`
+    return h('li', h('a', { href: `#peers/${peer}` }, peerName))
   }
 
   function item (key, value) {
     if (key === 'holders' && depth === 0) {
-      return html`
-        <li><b>Held by:</b>
-        <ul>${value.map(displayPeer)}</ul>
-        </li>
-        `
+      return h('li',
+        h('strong', 'Held by:'),
+        h('ul', value.map(displayPeer))
+      )
     }
 
     if (value === [] || value === {} || !value) value = ''
@@ -124,6 +128,31 @@ function view (state, emit) {
       value = readableBytes(value)
     }
 
-    return html`<li><b>${key}:</b> ${value}</li>`
+    if (key === 'duration' && typeof value === 'number') {
+      value = secondsToHms(value)
+    }
+
+    return h('li', h('strong', `${key}:`), ' ', value)
+  }
+
+  // TODO these fns are also in file.js - deduplicate
+  function subdir (portion, i, filePath) {
+    if (portion === '.') return h('span')
+
+    return h('span', h('a', {
+      href: 'javascript:void(null)',
+      onclick: subdirQuery(filePath.slice(0, i + 1))
+    }, portion), ' / ')
+  }
+
+  function subdirQuery (a) {
+    return () => {
+      state.subdirQuery = Array.isArray(a) ? a.join('/') : a
+      request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
+        .then((res) => {
+          emit('subdirResult', res)
+        })
+        .catch(console.log)
+    }
   }
 }

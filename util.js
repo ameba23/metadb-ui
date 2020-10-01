@@ -26,4 +26,16 @@ function createOnSubmit (requestFn, route, emit, event) {
   }
 }
 
-module.exports = { readableBytes, formData, createOnSubmit }
+function secondsToHms (d) {
+  d = Number(d)
+  const h = Math.floor(d / 3600)
+  const m = Math.floor(d % 3600 / 60)
+  const s = Math.floor(d % 3600 % 60)
+
+  const hDisplay = h > 0 ? h + ' h ' : ''
+  const mDisplay = (h > 0 || m > 0) ? m + ' m ' : ''
+  const sDisplay = s + ' s'
+  return hDisplay + mDisplay + sDisplay
+}
+
+module.exports = { readableBytes, formData, createOnSubmit, secondsToHms }

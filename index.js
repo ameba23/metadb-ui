@@ -6,7 +6,7 @@ css('tachyons')
 var app = choo()
 
 const defaultSettings = {
-  host: `http://${process.env.host || 'localhost'}`,
+  host: `http${process.env.https ? 's' : ''}://${process.env.host || 'localhost'}`,
   port: process.env.port || 2323
 }
 
