@@ -1,33 +1,44 @@
-const html = require('choo/html')
+const h = require('hyperscript')
 const createRequest = require('../request')
-const { formData } = require('../util')
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
   const request = createRequest(state.connectionSettings)
-  return basic(state, emit, html`
-    <h3>Settings</h3>
-    <p>Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}</p>
-    <form id="addname" onsubmit=${onSubmit}>
-      <p>
-        <label for="name">Name: </label>
-        <input type=text id="name" value="${state.settings.peerNames[state.settings.key]}" name="name">
-      </p>
-      <p>
-        <label for="downloadPath">Download path: </label>
-        <input type="text" id="downloadPath" value="${state.settings.downloadPath}" name="downloadPath">
-        <a href="file://${state.settings.downloadPath}">Open downloadpath locally</a>
-      </p>
-      <input type=submit value="Update settings">
-    </form>
-  `)
+  const success = state.updateSuccessful
+  state.updateSuccessful = false
+  state.setName = state.settings.peerNames[state.settings.key]
+  state.setDownloadPath = state.settings.downloadPath
+  return basic(state, emit,
+    h('div',
+      h('h3', 'Settings'),
+      h('p', `Host: ${state.connectionSettings.host} Port: ${state.connectionSettings.port.toString()}`),
+      h('form', { id: 'addname', onsubmit: onSubmit },
+        h('p',
+          h('label', { for: 'name' }, 'Name:'),
+          h('input', { type: 'text', id: 'name', value: state.setName, name: 'name', oninput: updateName })
+        ),
+        h('p',
+          h('label', { for: 'downloadPath' }, 'Download path:'),
+          h('input', { type: 'text', id: 'downloadPath', value: state.setDownloadPath, name: 'downloadPath', size: 60, oninput: updateDownloadPath })
+        ),
+        h('input', { type: 'submit', value: 'Update settings' }),
+        h('span', success ? 'Update successful' : '')
+      )
+    )
+  )
+
+  function updateName (event) {
+    state.setName = event.target.value
+  }
+
+  function updateDownloadPath (event) {
+    state.setDownloadPath = event.target.value
+  }
 
   function onSubmit (e) {
     e.preventDefault()
-    var form = e.currentTarget
-    var thing = formData(form)
-    request.post('/settings', thing)
+    request.post('/settings', { name: state.setName, downloadPath: state.setDownloadPath })
       .then((res) => {
         emit('updateSettings', res)
       })

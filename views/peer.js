@@ -1,4 +1,4 @@
-const html = require('choo/html')
+const h = require('hyperscript')
 const TITLE = 'metadb - peers'
 const basic = require('./basic')
 const { filesView } = require('./files')
@@ -10,12 +10,14 @@ function view (state, emit) {
   const peer = state.peers.find(peer => peer.feedId === state.params.peerId)
   if (peer) {
     peer.name = peer.name || peer.feedId
-    return basic(state, emit, html`
-      <h3>${peer.name} - ${peer.numberFiles} files</h3>
-      ${filesView(state, emit, 'files')}
-    `)
-    // TODO show files this peer is holding
+    return basic(state, emit,
+      h('div',
+        // h('h3', `${peer.name} - ${peer.numberFiles} files`),
+        h('h3', `${peer.name} - ${peer.files} files`),
+        filesView(state, emit, 'files')
+      )
+    )
   } else {
-    return basic(state, emit, html`<p>Peer not found</p>`)
+    return basic(state, emit, h('p', 'Peer not found'))
   }
 }

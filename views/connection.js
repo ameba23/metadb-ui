@@ -1,18 +1,18 @@
 const h = require('hyperscript')
 const createRequest = require('../request')
-const { formData } = require('../util')
 
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
   const request = createRequest(state.connectionSettings)
+  state.joinSwarmName = ''
   return basic(state, emit, h('div',
     h('h3', 'Connections'),
     h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm)),
     h('form', { id: 'swarmtopic', onsubmit: onSubmit },
       h('label', { for: 'swarm' }, 'Join or create new swarm:'),
-      h('input', { type: 'text', id: 'swarm', value: '', name: 'swarm' }),
+      h('input', { type: 'text', id: 'swarm', value: state.joinSwarmName, name: 'swarm', oninput: updateJoinSwarmName }),
       h('input', { type: 'submit', value: 'Connect to swarm' })
     ),
     h('button', { onclick: privateSwarm }, 'Create private swarm'),
@@ -20,13 +20,14 @@ function view (state, emit) {
     h('ul', Object.keys(state.settings.swarms).filter(s => !state.settings.swarms[s]).map(displaySwarm))
   ))
 
+  function updateJoinSwarmName (event) {
+    state.joinSwarmName = event.target.value
+  }
+
   function onSubmit (e) {
     e.preventDefault()
-    const form = e.currentTarget
-    const f = formData(form)
-    console.log(f)
 
-    request.post('/swarm', f)
+    request.post('/swarm', { swarm: state.joinSwarmName })
       .then((res) => {
         emit('updateConnection', res)
       })

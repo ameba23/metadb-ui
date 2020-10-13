@@ -3,7 +3,7 @@ const h = require('hyperscript')
 const path = require('path')
 const TITLE = 'metadb'
 const createRequest = require('../request')
-const { readableBytes, secondsToHms, formData } = require('../util')
+const { readableBytes, secondsToHms } = require('../util')
 const basic = require('./basic')
 
 module.exports = view
@@ -14,6 +14,7 @@ function view (state, emit) {
   const request = createRequest(state.connectionSettings)
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const file = state.file
+  state.newComment = ''
   if (file) {
     if (file.dir) {
       return basic(state, emit, h('div',
@@ -23,18 +24,19 @@ function view (state, emit) {
     } else {
       const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
       return basic(state, emit, h('div',
-        h('h3', filenames.map((filename) => {
-          return h('span',
-            h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
+        filenames.map((filename) => {
+          return h('h3',
+            h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, '/'),
+            ' ',
             path.dirname(filename).split('/').map(subdir),
             path.basename(filename)
           )
-        })),
+        }),
         h('button', { type: 'button', onclick: requestFile }, 'Request file'),
         h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request containing directory'),
         item(null, file),
         h('form', { id: 'comment', onsubmit: onSubmitComment },
-          h('input', { type: 'text', id: 'comment', value: '', name: 'comment' }),
+          h('input', { type: 'text', id: 'comment', value: state.newComment, name: 'comment', oninput: updateNewComment }),
           h('input', { type: 'submit', value: 'add comment' })
         ),
         h('button', 'star')
@@ -44,12 +46,13 @@ function view (state, emit) {
     return basic(state, emit, h('p', 'File not found'))
   }
 
+  function updateNewComment (event) {
+    state.newComment = event.target.value
+  }
+
   function onSubmitComment (e) {
     e.preventDefault()
-    var form = e.currentTarget
-    var thing = formData(form)
-    // body.get('searchterm')
-    request.post(`/files/${file.sha256}`, thing)
+    request.post(`/files/${file.sha256}`, { comment: state.newComment })
       .then((res) => {
         emit('updateComments', res)
       })
@@ -90,10 +93,11 @@ function view (state, emit) {
   }
 
   function displayPeer (peer) {
+    const me = (peer === state.settings.key) ? '(You)' : undefined
     const peerName = state.settings.peerNames
       ? state.settings.peerNames[peer] || peer
       : peer
-    return h('li', h('a', { href: `#peers/${peer}` }, peerName))
+    return h('li', h('a', { href: `#peers/${peer}` }, peerName, me))
   }
 
   function item (key, value) {
@@ -105,7 +109,13 @@ function view (state, emit) {
     }
 
     if (value === [] || value === {} || !value) value = ''
-    if (Array.isArray(value)) value = JSON.stringify(value) // TODO this could be improved
+
+    if (Array.isArray(value)) {
+      value = value.length > 1
+        ? JSON.stringify(value)
+        : value[0]
+    }
+
     if (typeof value === 'object') {
       // depth += 1
       return html`

@@ -1,12 +1,13 @@
 const createRequest = require('../request')
 const h = require('hyperscript')
-const { formData, readableBytes } = require('../util')
+const { readableBytes } = require('../util')
 
 module.exports = function (state, emit, content) {
   const request = createRequest(state.connectionSettings)
+  state.searchterm = ''
   return h('body',
     h('h3',
-      h('form', { id: 'search', onsubmit: onSubmit },
+      h('form', { onsubmit: submitSearch },
         h('strong', ' metadb'), ' - ',
         h('a', { href: '#connection' }, 'connection'), ' - ',
         h('a', { href: '#' }, 'files'), ' - ',
@@ -14,9 +15,10 @@ module.exports = function (state, emit, content) {
         h('a', { href: '#peers' }, 'peers'), ' - ',
         h('a', { href: '#settings' }, 'settings'), ' - ',
         h('a', { href: '#transfers' }, 'transfers'), ' - ',
-        h('input', { type: 'text', id: 'searchterm', value: '', name: 'searchterm' }),
-        h('input', { type: 'submit', value: 'search' })
-      )),
+        h('input', { type: 'text', id: 'searchterm', value: state.searchterm, name: 'searchterm', oninput: updateSearchterm }),
+        h('input', { type: 'submit', value: 'Search' })
+      )
+    ),
     h('p', `${state.settings.filesInDb || '?'} files in db (${readableBytes(state.settings.bytesInDb || 0)}). ${displayConnections()} ${displayConnectedPeers()}`),
     // h('p', `${JSON.stringify(state.wsEvents)}`),
     // h('h1.bg-pink.pa3.h-100.w-100.tc.red', 'hello'),
@@ -24,6 +26,10 @@ module.exports = function (state, emit, content) {
     state.connectionError ? connectionError : undefined,
     content
   )
+
+  function updateSearchterm (event) {
+    state.searchterm = event.target.value
+  }
 
   function displayConnections () {
     if (!state.settings.swarms) return ''
@@ -61,12 +67,10 @@ module.exports = function (state, emit, content) {
     //TODO
   }
 
-  function onSubmit (e) {
-    e.preventDefault()
-    var form = e.currentTarget
-    var thing = formData(form)
+  function submitSearch (event) {
+    event.preventDefault()
     // TODO this request should be in the store
-    request.post('/files/search', thing)
+    request.post('/files/search', { searchterm: state.searchterm })
       .then((res) => {
         emit('searchResult', res)
       })

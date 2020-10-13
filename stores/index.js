@@ -6,6 +6,7 @@ module.exports = function createStores (defaultSettings) {
     state.peers = []
     state.settings = {}
     state.wsEvents = {}
+    state.downloads = {}
 
     state.connectionSettings = defaultSettings
     const request = createRequest(state.connectionSettings)
@@ -105,11 +106,22 @@ module.exports = function createStores (defaultSettings) {
       }).catch(handleError)
     })
 
+    emitter.on('chronological', () => {
+      request.get('/files/chronological').then((response) => {
+        state.connectionError = false
+        state.files = response.data
+        emitter.emit('render')
+      }).catch(handleError)
+    })
+
     emitter.on('transfers', (res) => {
       request.get('/request').then((response) => {
         state.connectionError = false
         state.request = response.data
-        emitter.emit('render')
+        request.get('/downloads').then((response) => {
+          state.downloads = response.data
+          emitter.emit('render')
+        }).catch(handleError)
       }).catch(handleError)
     })
     emitter.emit('transfers')
@@ -127,6 +139,7 @@ module.exports = function createStores (defaultSettings) {
     emitter.on('updateSettings', (res) => {
       state.settings = res.data
       state.wsEvents.connectedPeers = state.settings.connectedPeers
+      state.updateSuccessful = true
       emitter.emit('render')
     })
 

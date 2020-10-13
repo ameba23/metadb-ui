@@ -1,14 +1,16 @@
-var html = require('choo/html')
+const h = require('hyperscript')
 const basic = require('./basic')
 
-var TITLE = 'metadb - route not found'
+const TITLE = 'metadb - route not found'
 
 module.exports = view
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  return basic(state, emit, html`
-    <h1>Route not found.</h1>
-    <a href="/">Back to main.</a>
-  `)
+  return basic(state, emit,
+    h('div',
+      h('h1', 'Route not found.'),
+      h('a', { href: '/' }, 'Back to main')
+    )
+  )
 }

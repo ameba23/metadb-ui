@@ -9,17 +9,17 @@ const basic = require('./basic')
 module.exports = view
 module.exports.filesView = filesView
 
-const noFiles = h('p', 'You currently have no files in the database.  To add some, either ',
+const noFilesMessage = h('p', 'You currently have no files in the database.  To add some, either ',
   h('a', { href: '#connection' }, 'connect to a swarm'), ' or ', h('a', { href: '#shares' }, 'add some files'), ' yourself.')
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  return basic(state, emit, filesView(state, emit, 'files', noFiles))
+  return basic(state, emit, filesView(state, emit, 'files', { noFilesMessage }))
 }
 
-function filesView (state, emit, files, noFilesMessage, options = {}) {
+function filesView (state, emit, files, options = {}) {
   const request = createRequest(state.connectionSettings)
-  noFilesMessage = noFilesMessage || h('p', 'No files to display')
+  const noFilesMessage = options.noFilesMessage || h('p', 'No files to display')
 
   function tableLine (file) {
     if (file.dir) {
@@ -33,17 +33,23 @@ function filesView (state, emit, files, noFilesMessage, options = {}) {
     }
 
     const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
-    // TODO this does not appear to handle multiple filename arrays correctly
-    return html`
-    <tr>
-      <td>
-          <input type="checkbox" id="${file.sha256}" name="${file.sha256}" value="true">
-          ${filenames.map(filename => path.dirname(filename).split('/').map(subdir))}
-          <a href="#files/${file.sha256}">${path.basename(file.filename)}</a></td>
-      <td>${file.metadata.mimeType}</td>
-      <td>${readableBytes(file.size)}</td>
-    </tr>
-  `
+    // TODO should we reverse order so basename appears first and less relevant parts of the dir tree later?
+    return h('tr',
+      h('td',
+        h('input', { type: 'checkbox', id: file.sha256, name: file.sha256, value: true }),
+        filenames.map((filename) => {
+          return h('span',
+            h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, '/'),
+            ' ',
+            path.dirname(filename).split('/').map(subdir),
+            h('a', { href: `#files/${file.sha256}` }, path.basename(filename)),
+            h('br')
+          )
+        })
+      ),
+      h('td', file.metadata.mimeType),
+      h('td', readableBytes(file.size))
+    )
   }
 
   function subdir (portion, i, filePath) {
@@ -55,13 +61,16 @@ function filesView (state, emit, files, noFilesMessage, options = {}) {
     }, portion), ' / ')
   }
 
+  const title = options.subdirQuery
+    ? h('h2',
+      h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
+      options.subdirQuery.split('/').map(subdir)
+    )
+    : options.title ? h('h2', options.title) : h('span')
+
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
-    options.subdirQuery
-      ? h('h2',
-        h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
-        options.subdirQuery.split('/').map(subdir)
-      )
-      : h('span'),
+    title,
+    h('button', { onclick: function () { emit('chronological') } }, 'chronological'),
     h('table.striped--moon-gray:nth-child',
       h('tr',
         h('th', 'Filename'),
