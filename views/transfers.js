@@ -30,9 +30,28 @@ function view (state, emit) {
         : null
       ),
       h('h3', 'Downloaded (from db)'),
-      h('p', JSON.stringify(state.downloads))
+      h('table.table',
+        h('thead',
+          h('tr',
+            h('th', 'Filename'),
+            h('th', 'From')
+          )
+        ),
+        h('tbody',
+          state.downloads.map(displayDownloadedFile)
+        )
+      )
     )
   )
+
+  function displayDownloadedFile (file) {
+    return h('tr',
+      h('td', h('a', { href: `#files/${file.hash}` }, file.name)),
+      h('td', displayPeer(file.from))
+    )
+    // verified (bool)
+    // timestamp
+  }
 
   function displayPeer (feedId) {
     const peer = state.peers.find(p => p.feedId === feedId)
