@@ -71,13 +71,15 @@ function filesView (state, emit, files, options = {}) {
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
     title,
     h('button', { onclick: function () { emit('chronological') } }, 'chronological'),
-    h('table.striped--moon-gray:nth-child',
-      h('tr',
-        h('th', 'Filename'),
-        h('th', 'MIME type'),
-        h('th', 'Size')
+    h('table.table.table-striped.table-sm',
+      h('thead',
+        h('tr',
+          h('th', { scope: 'col' }, 'Filename'),
+          h('th', { scope: 'col' }, 'MIME type'),
+          h('th', { scope: 'col' }, 'Size')
+        )
       ),
-      state[files].map(tableLine)
+      h('tbody', state[files].map(tableLine))
     ),
     state[files].length
       ? h('input', { type: 'submit', value: 'Request files' })

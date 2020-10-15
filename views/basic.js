@@ -1,30 +1,63 @@
 const createRequest = require('../request')
 const h = require('hyperscript')
 const { readableBytes } = require('../util')
+const icons = require('./icons')
 
 module.exports = function (state, emit, content) {
   const request = createRequest(state.connectionSettings)
+  const swarms = state.settings.swarms
+    ? Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s])
+    : []
+
   state.searchterm = ''
+
   return h('body',
-    h('h3',
-      h('form', { onsubmit: submitSearch },
-        h('strong', ' metadb'), ' - ',
-        h('a', { href: '#connection' }, 'connection'), ' - ',
-        h('a', { href: '#' }, 'files'), ' - ',
-        h('a', { href: '#shares' }, 'shares'), ' - ',
-        h('a', { href: '#peers' }, 'peers'), ' - ',
-        h('a', { href: '#settings' }, 'settings'), ' - ',
-        h('a', { href: '#transfers' }, 'transfers'), ' - ',
-        h('input', { type: 'text', id: 'searchterm', value: state.searchterm, name: 'searchterm', oninput: updateSearchterm }),
-        h('input', { type: 'submit', value: 'Search' })
-      )
+    h('nav.navbar.navbar-expand-lg.navbar-light.bg-light',
+        // h('button.navbar-toggler', { type: 'button', 'data-toggle': 'collapse', 'data-target': '#navbarSupportedContent', 'aria-controls': 'navbarSupportedContent', 'aria-expanded': 'false', 'aria-label': 'Toggle navigation' },
+        //   h('span.navbar-toggler-icon')
+        // ),
+        h('p.navbar-brand', h('code', 'metadb')),
+        // h('div.collapse.navbar-collapse', { id: 'navbarSupportedContent' },
+          h('ul.navbar-nav.mr-auto',
+            h(`li.nav-item${(state.route === 'connection') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#connection' }, icons.use('hdd-network'), ' connections ', h('small', h('strong', swarms.length)))
+            ),
+            h(`li.nav-item${(state.route === '/') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#' }, icons.use('files'), ' files ', h('small', h('strong', state.settings.filesInDb)))
+            ),
+            h(`li.nav-item${(state.route === 'shares') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#shares' }, icons.use('server'), ' shares')
+            ),
+            h(`li.nav-item${(state.route === 'peers') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#peers' }, icons.use('people'), ' peers')
+            ),
+            h(`li.nav-item${(state.route === 'settings') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#settings' }, icons.use('gear'), ' settings')
+            ),
+            h(`li.nav-item${(state.route === 'transfers') ? '.active' : ''}`,
+              h('a.nav-link', { href: '#transfers' }, icons.use('arrow-down-up'), ' transfers')
+            )
+          ),
+          h('form.form-inline.my-2.my-lg-0', { onsubmit: submitSearch },
+            h('div.input-group.mb3',
+              h('input.form-control.mr-sm-2', { type: 'search', id: 'searchterm', value: state.searchterm, name: 'searchterm', oninput: updateSearchterm, 'aria-label': 'Search' }),
+              h('div.input-group-append',
+                h('button.btn.btn-success', { type: 'submit', class: 'button-addon2' }, 'Search')
+              )
+            )
+          )
+        // )
     ),
+    // h('div.jumbotron',
     h('p', `${state.settings.filesInDb || '?'} files in db (${readableBytes(state.settings.bytesInDb || 0)}). ${displayConnections()} ${displayConnectedPeers()}`),
+    // ),
     // h('p', `${JSON.stringify(state.wsEvents)}`),
     // h('h1.bg-pink.pa3.h-100.w-100.tc.red', 'hello'),
     h('hr'),
+
     state.connectionError ? connectionError : undefined,
-    content
+    h('div.container', content),
+    icons.build()
   )
 
   function updateSearchterm (event) {
@@ -64,7 +97,7 @@ module.exports = function (state, emit, content) {
   }
 
   function onSubmitConnection (e) {
-    //TODO
+    // TODO
   }
 
   function submitSearch (event) {

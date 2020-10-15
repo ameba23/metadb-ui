@@ -1,7 +1,7 @@
 var css = require('sheetify')
 var choo = require('choo')
 
-css('tachyons')
+css('bootstrap')
 
 var app = choo()
 
