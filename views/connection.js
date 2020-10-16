@@ -13,9 +13,9 @@ function view (state, emit) {
     h('form', { id: 'swarmtopic', onsubmit: onSubmit },
       h('label', { for: 'swarm' }, 'Join or create new swarm:'),
       h('input', { type: 'text', id: 'swarm', value: state.joinSwarmName, name: 'swarm', oninput: updateJoinSwarmName }),
-      h('input', { type: 'submit', value: 'Connect to swarm' })
+      h('input.btn.btn-outline-success', { type: 'submit', value: 'Connect to swarm' })
     ),
-    h('button', { onclick: privateSwarm }, 'Create private swarm'),
+    h('button.btn.btn-outline-secondary', { onclick: privateSwarm }, 'Create private swarm'),
     h('hr'),
     h('ul', Object.keys(state.settings.swarms).filter(s => !state.settings.swarms[s]).map(displaySwarm))
   ))
@@ -47,8 +47,8 @@ function view (state, emit) {
     const connectSwarm = ConnectSwarm(swarm)
 
     const toggleSwarm = state.settings.swarms[swarm]
-      ? h('button', { onclick: unSwarm }, 'Disconnect')
-      : h('button', { onclick: connectSwarm }, 'Connect')
+      ? h('button.btn.btn-outline-danger', { onclick: unSwarm }, 'Disconnect')
+      : h('button.btn.btn-outline-success', { onclick: connectSwarm }, 'Connect')
 
     return h('li', swarm, toggleSwarm)
   }

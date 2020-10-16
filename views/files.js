@@ -14,7 +14,12 @@ const noFilesMessage = h('p', 'You currently have no files in the database.  To 
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  return basic(state, emit, filesView(state, emit, 'files', { noFilesMessage }))
+  return basic(state, emit,
+    h('div',
+      h('button.btn.btn-outline-secondary', { onclick: function () { emit('chronological') } }, 'Recently added'),
+      filesView(state, emit, 'files', { noFilesMessage })
+    )
+  )
 }
 
 function filesView (state, emit, files, options = {}) {
@@ -70,7 +75,6 @@ function filesView (state, emit, files, options = {}) {
 
   return h('form', { id: 'selectFiles', onsubmit: requestFiles },
     title,
-    h('button', { onclick: function () { emit('chronological') } }, 'chronological'),
     h('table.table.table-striped.table-sm',
       h('thead',
         h('tr',

@@ -24,6 +24,9 @@ module.exports = {
       />
       <path fill-rule="evenodd" d="M8 5.754a2.246 2.246 0 100 4.492 2.246 2.246 0 000-4.492zM4.754 8a3.246 3.246 0 116.492 0 3.246 3.246 0 01-6.492 0z" />
   </symbol>
+  <symbol viewBox="0 0 16 16" class="bi bi-person" fill="currentColor" id="person" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M10 5a2 2 0 11-4 0 2 2 0 014 0zM8 8a3 3 0 100-6 3 3 0 000 6zm6 5c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+  </symbol>
 </svg>`
   },
   use (id) {
@@ -31,4 +34,4 @@ module.exports = {
   }
 }
 
-// to get: film, book, image, music-note, star, star-fill, person, hdd, gear
+// to get: film, book, image, music-note, star, star-fill, hdd

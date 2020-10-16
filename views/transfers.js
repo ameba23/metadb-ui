@@ -34,7 +34,8 @@ function view (state, emit) {
         h('thead',
           h('tr',
             h('th', 'Filename'),
-            h('th', 'From')
+            h('th', 'From'),
+            h('th', '')
           )
         ),
         h('tbody',
@@ -45,9 +46,14 @@ function view (state, emit) {
   )
 
   function displayDownloadedFile (file) {
+    const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
+
     return h('tr',
       h('td', h('a', { href: `#files/${file.hash}` }, file.name)),
-      h('td', displayPeer(file.from))
+      h('td', displayPeer(file.from)),
+      h('td',
+        h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
+      )
     )
     // verified (bool)
     // timestamp

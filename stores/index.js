@@ -22,6 +22,9 @@ module.exports = function createStores (defaultSettings) {
         if (message.indexer) {
           state.wsEvents.indexerLog += message.indexer
         }
+        if (message.sharedbUpdated) {
+          emitter.emit('shares')
+        }
 
         if (message.download && message.download.downloadComplete) {
           emitter.emit('transfers')

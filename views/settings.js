@@ -22,7 +22,7 @@ function view (state, emit) {
           h('label', { for: 'downloadPath' }, 'Download path:'),
           h('input', { type: 'text', id: 'downloadPath', value: state.setDownloadPath, name: 'downloadPath', size: 60, oninput: updateDownloadPath })
         ),
-        h('input', { type: 'submit', value: 'Update settings' }),
+        h('input.btn.btn-outline-success', { type: 'submit', value: 'Update settings' }),
         h('span', success ? 'Update successful' : '')
       )
     )
