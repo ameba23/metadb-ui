@@ -4,9 +4,12 @@ module.exports = function createStores (defaultSettings) {
   return function (state, emitter) {
     state.files = []
     state.peers = []
+    state.request = []
     state.settings = {}
+    state.settings.connectedPeers = []
     state.wsEvents = {}
     state.downloads = {}
+    state.shareTotals = []
 
     state.connectionSettings = defaultSettings
     const request = createRequest(state.connectionSettings)
@@ -28,6 +31,11 @@ module.exports = function createStores (defaultSettings) {
 
         if (message.download && message.download.downloadComplete) {
           emitter.emit('transfers')
+        }
+
+        if (message.updateTotals) {
+          emitter.emit('peers')
+          emitter.emit('settings')
         }
 
         Object.assign(state.wsEvents, message)
@@ -105,7 +113,10 @@ module.exports = function createStores (defaultSettings) {
       request.get('/files/shares').then((response) => {
         state.connectionError = false
         state.files = response.data
-        emitter.emit('render')
+        request.get('/share-totals').then((response) => {
+          state.shareTotals = response.data
+          emitter.emit('render')
+        })
       }).catch(handleError)
     })
 

@@ -27,6 +27,17 @@ module.exports = {
   <symbol viewBox="0 0 16 16" class="bi bi-person" fill="currentColor" id="person" xmlns="http://www.w3.org/2000/svg">
      <path fill-rule="evenodd" d="M10 5a2 2 0 11-4 0 2 2 0 014 0zM8 8a3 3 0 100-6 3 3 0 000 6zm6 5c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
   </symbol>
+    <symbol viewBox="0 0 16 16" class="bi bi-file-arrow-down" fill="currentColor" id="file-arrow-down" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M4 0h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2a2 2 0 012-2zm0 1a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V2a1 1 0 00-1-1H4z" />
+        <path fill-rule="evenodd" d="M8 5a.5.5 0 01.5.5v3.793l1.146-1.147a.5.5 0 01.708.708l-2 2a.5.5 0 01-.708 0l-2-2a.5.5 0 11.708-.708L7.5 9.293V5.5A.5.5 0 018 5z" />
+    </symbol>
+    <symbol viewBox="0 0 16 16" class="bi bi-check" fill="currentColor" id="check" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 011.071 1.05l-3.992 4.99a.75.75 0 01-1.08.02L4.324 8.384a.75.75 0 111.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 01.02-.022z" />
+    </symbol>
+    <symbol viewBox="0 0 16 16" class="bi bi-clipboard" fill="currentColor" id="clipboard" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M4 1.5H3a2 2 0 00-2 2V14a2 2 0 002 2h10a2 2 0 002-2V3.5a2 2 0 00-2-2h-1v1h1a1 1 0 011 1V14a1 1 0 01-1 1H3a1 1 0 01-1-1V3.5a1 1 0 011-1h1v-1z" />
+        <path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5zm-3-1A1.5 1.5 0 005 1.5v1A1.5 1.5 0 006.5 4h3A1.5 1.5 0 0011 2.5v-1A1.5 1.5 0 009.5 0h-3z" />
+    </symbol>
 </svg>`
   },
   use (id) {

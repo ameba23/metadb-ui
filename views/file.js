@@ -5,6 +5,7 @@ const TITLE = 'metadb'
 const createRequest = require('../request')
 const { readableBytes, secondsToHms } = require('../util')
 const basic = require('./basic')
+const components = require('../components')
 
 module.exports = view
 
@@ -22,7 +23,12 @@ function view (state, emit) {
         h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request directory')
       ))
     } else {
+      const requested = state.request.find(f => f.sha256 === file.sha256)
       const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
+      file.holders = file.holders || []
+      const isAvailable = file.holders.find(h => state.settings.connectedPeers.includes(h))
+
+      // TODO check wishlist and only display download if not queued
       return basic(state, emit, h('div',
         filenames.map((filename) => {
           return h('h3',
@@ -32,14 +38,19 @@ function view (state, emit) {
             path.basename(filename)
           )
         }),
-        h('button', { type: 'button', onclick: requestFile }, 'Request file'),
-        h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request containing directory'),
+        h('div', requested
+          ? h('p.text-success', 'File queued for download')
+          : h('span',
+            h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`, { type: 'button', onclick: requestFile }, isAvailable ? 'Download file' : 'Queue file for download'),
+            h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`, { type: 'button', onclick: requestContainingDirectory }, isAvailable ? 'Download containing directory' : 'Queue containing directory for download')
+          )
+        ),
         item(null, file),
         h('form', { id: 'comment', onsubmit: onSubmitComment },
           h('input', { type: 'text', id: 'comment', value: state.newComment, name: 'comment', oninput: updateNewComment }),
-          h('input', { type: 'submit', value: 'add comment' })
+          h('input.btn.btn-outline-secondary', { type: 'submit', value: 'add comment' })
         ),
-        h('button', 'star')
+        h('button.btn.btn-outline-secondary', 'star')
       ))
     }
   } else {
@@ -92,19 +103,19 @@ function view (state, emit) {
     if (key) return h('li', h('strong', `${key}:`))
   }
 
-  function displayPeer (peer) {
-    const me = (peer === state.settings.key) ? '(You)' : undefined
-    const peerName = state.settings.peerNames
-      ? state.settings.peerNames[peer] || peer
-      : peer
-    return h('li', h('a', { href: `#peers/${peer}` }, peerName, me))
-  }
+  // function displayPeer (peer) {
+  //   const me = (peer === state.settings.key) ? '(You)' : undefined
+  //   const peerName = state.settings.peerNames
+  //     ? state.settings.peerNames[peer] || peer
+  //     : peer
+  //   return h('li', h('a', { href: `#peers/${peer}` }, peerName, me))
+  // }
 
   function item (key, value) {
     if (key === 'holders' && depth === 0) {
       return h('li',
         h('strong', 'Held by:'),
-        h('ul', value.map(displayPeer))
+        h('ul', value.map(components.createDisplayPeer(state)))
       )
     }
 
@@ -116,7 +127,7 @@ function view (state, emit) {
         : value[0]
     }
 
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       // depth += 1
       return html`
         ${displayKey(key)}

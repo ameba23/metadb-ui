@@ -2,6 +2,8 @@ const basic = require('./basic')
 const createRequest = require('../request')
 const h = require('hyperscript')
 const { filesView } = require('./files')
+const { spinner } = require('../components')
+const icons = require('../icons')
 
 module.exports = view
 
@@ -21,30 +23,95 @@ function view (state, emit) {
           )
         )
       ),
-  // <input type="text" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="button-addon2">
-  // <div class="input-group-append">
-  //   <button class="btn btn-outline-secondary" type="button" id="button-addon2">Button</button>
-  // </div>
-      h('p', state.wsEvents.indexer),
+      h('pre.pre-scrollable', state.wsEvents.indexerLog),
+      (state.wsEvents.indexQueue && state.wsEvents.indexQueue.length)
+        ? h('div',
+          h('h4', 'Being indexed:'),
+          h('ul', state.wsEvents.indexQueue.map(displayIndexQueueItem))
+        )
+        : undefined,
+      // h('p', JSON.stringify(state.shareTotals)),
+      h('h4', 'Shared folders'),
+      h('ul',
+        state.shareTotals.map(displayShareDirectory)
+      ),
       filesView(state, emit, 'files')
     )
   )
-  // <textarea readonly="readonly">
-  // <pre><code>
-  // </code></pre>
-  // </textarea>
+
+  function displayIndexQueueItem (dir) {
+    const beingIndexed = state.wsEvents.indexingFiles === dir
+    return h('li',
+      beingIndexed ? spinner() : icons.use('folder'),
+      dir,
+      ' ',
+      beingIndexed
+        ? h('span',
+          h('button.btn.btn-outline-secondary',
+            { onclick: pauseIndexing }, 'Pause indexing'
+          ),
+          ' '
+        )
+        : undefined,
+      h('button.btn.btn-outline-danger', { onclick: stopIndexing(dir) }, 'Cancel indexing')
+    )
+  }
+
+  function displayShareDirectory (shareDirectory) {
+    return h('li',
+      icons.use('folder'), ' ',
+      h('code.text-reset', shareDirectory.dir),
+      ` - ${shareDirectory.numberFiles} files. `,
+      h('button.btn.btn-outline-secondary', { onclick: rescan(shareDirectory.dir) }, 'Rescan'),
+      ' ',
+      h('button.btn.btn-outline-danger', { onclick: stopSharing(shareDirectory.dir) }, 'Stop sharing (TODO)')
+    )
+    // shareDirectory.bytes
+  }
 
   function updateDirToShare (event) {
     state.dirToShare = event.target.value
   }
 
+  function stopSharing (dir) {
+    return function () {
+      // TODO
+    }
+  }
+
+  function rescan (dir) {
+    return function () {
+      request.post('/files/index', { dir })
+        .then((res) => {
+          emit('indexFiles', res)
+        })
+        .catch(console.log)
+    }
+  }
+
   function onSubmit (e) {
     e.preventDefault()
-    // var form = e.currentTarget
-    // var thing = formData(form)
     request.post('/files/index', { dir: state.dirToShare })
       .then((res) => {
         emit('indexFiles', res)
+      })
+      .catch(console.log)
+  }
+
+  function stopIndexing (dir) {
+    return function () {
+      request.delete('/files/index', { dir })
+        .then((res) => {
+
+        })
+        .catch(console.log)
+    }
+  }
+
+  function pauseIndexing () {
+    request.get('/files/index/pause')
+      .then((res) => {
+        // TODO
       })
       .catch(console.log)
   }

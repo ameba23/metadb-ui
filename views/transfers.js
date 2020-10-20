@@ -2,39 +2,42 @@ const h = require('hyperscript')
 const TITLE = 'metadb - transfers'
 const basic = require('./basic')
 const createRequest = require('../request')
+const icons = require('../icons')
 
 module.exports = view
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const request = createRequest(state.connectionSettings)
+  const downloadingFiles = state.wsEvents.download
+    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
+    : []
 
   return basic(state, emit,
     h('div',
-      h('h3', 'Wish list:'),
+      h('h3', 'Queued for download:'),
       h('ul', state.request.map(displayWishListItem)),
-      h('h3', 'Current downloads:'),
-      h('ul', state.wsEvents.download
-        ? Object.keys(state.wsEvents.download)
-          .filter(f => !state.wsEvents.download[f].downloaded)
-          .map(displayDownloadingFile)
-        : null
+      h('h3', 'Downloading:'),
+      h('table',
+        h('thead',
+          h('tr',
+            h('th', 'Name'),
+            h('th', '')
+          )
+        ),
+        h('tbody',
+          downloadingFiles.map(displayDownloadingFile)
+        )
       ),
       h('h3', 'Requests received:'),
       h('ul', h('li', JSON.stringify(state.wsEvents.uploadQueue))),
-      h('h3', 'Downloaded:'),
-      h('ul', state.wsEvents.download
-        ? Object.keys(state.wsEvents.download)
-          .filter(f => state.wsEvents.download[f].downloaded)
-          .map(displayCompleteFile)
-        : null
-      ),
-      h('h3', 'Downloaded (from db)'),
+      h('h3', 'Downloaded'),
       h('table.table',
         h('thead',
           h('tr',
             h('th', 'Filename'),
             h('th', 'From'),
+            h('th', ''),
             h('th', '')
           )
         ),
@@ -49,20 +52,24 @@ function view (state, emit) {
     const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
 
     return h('tr',
-      h('td', h('a', { href: `#files/${file.hash}` }, file.name)),
+      h('td',
+        h('a', { href: `#files/${file.hash}` }, file.name),
+        file.verified ? h('span.text-success', { title: 'File verified' }, icons.use('check')) : h('strong.text-danger', 'Not verified!')
+      ),
       h('td', displayPeer(file.from)),
       h('td',
         h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
+      ),
+      h('td',
+        h('small', Date(file.timestamp))
       )
     )
-    // verified (bool)
-    // timestamp
   }
 
   function displayPeer (feedId) {
     const peer = state.peers.find(p => p.feedId === feedId)
     if (!peer) return feedId
-    return h('a', { href: `#peers/${peer.feedId}` }, peer.name || peer.feedId)
+    return h('a', { href: `#peers/${peer.feedId}` }, icons.use('person'), peer.name || peer.feedId)
   }
 
   function displayWishListItem (file) {
@@ -83,20 +90,20 @@ function view (state, emit) {
   //     .catch(console.log) // TODO
   // }
 
-  function displayCompleteFile (name) {
-    const hash = state.wsEvents.download[name].hash
-    const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
-    const properties = state.wsEvents.download[name]
-    const verifiedMessage = properties.verified
-      ? 'File Verified.'
-      : properties.cannotVerify ? 'HASH DOES NOT MATCH' : ''
-    return h(
-      'li',
-      `${name} ${verifiedMessage}`,
-      // h('button', { onclick: openLocal(name) }, 'Open file locally'),
-      h('a', { href: `${hostAndPort}/downloads/${hash}`, target: '_blank' }, 'Open/download file in browser')
-    )
-  }
+  // function displayCompleteFile (name) {
+  //   const hash = state.wsEvents.download[name].hash
+  //   const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
+  //   const properties = state.wsEvents.download[name]
+  //   const verifiedMessage = properties.verified
+  //     ? 'File Verified.'
+  //     : properties.cannotVerify ? 'HASH DOES NOT MATCH' : ''
+  //   return h(
+  //     'li',
+  //     `${name} ${verifiedMessage}`,
+  //     // h('button', { onclick: openLocal(name) }, 'Open file locally'),
+  //     h('a', { href: `${hostAndPort}/downloads/${hash}`, target: '_blank' }, 'Open/download file in browser')
+  //   )
+  // }
 
   // function openLocal (file) {
   //   request.post('/open', { file })
@@ -110,9 +117,19 @@ function view (state, emit) {
     const bytesRecieved = properties.bytesRecieved || 0
     const size = properties.size || 0
     const percentage = Math.round(bytesRecieved / size * 100)
-    return h(
-      'li',
-      `${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`
+    return h('tr',
+      h('td',
+        `${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`
+      ),
+      h('td',
+        progressBar(percentage)
+      )
+    )
+  }
+
+  function progressBar (perc) {
+    return h('div.progress',
+      h('div.progress-bar.bg-success', { role: 'progressbar', style: `width: ${perc}%`, 'aria-valuenow': perc, 'aria-valuemin': '0', 'aria-valuemax': '100' }, perc)
     )
   }
 }

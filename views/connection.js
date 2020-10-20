@@ -1,7 +1,8 @@
 const h = require('hyperscript')
 const createRequest = require('../request')
-
 const basic = require('./basic')
+const icons = require('../icons')
+
 module.exports = view
 
 function view (state, emit) {
@@ -9,15 +10,32 @@ function view (state, emit) {
   state.joinSwarmName = ''
   return basic(state, emit, h('div',
     h('h3', 'Connections'),
-    h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm)),
+    state.settings.swarms
+      ? h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm))
+      : undefined,
     h('form', { id: 'swarmtopic', onsubmit: onSubmit },
-      h('label', { for: 'swarm' }, 'Join or create new swarm:'),
-      h('input', { type: 'text', id: 'swarm', value: state.joinSwarmName, name: 'swarm', oninput: updateJoinSwarmName }),
-      h('input.btn.btn-outline-success', { type: 'submit', value: 'Connect to swarm' })
+      h('div.input-group.mb-3',
+        h('input.form-control', {
+          type: 'text',
+          id: 'swarm',
+          value: state.joinSwarmName,
+          name: 'swarm',
+          oninput: updateJoinSwarmName,
+          placeholder: 'Join or create new swarm'
+        }),
+        h('div.input-group-append',
+          h('input.btn.btn-outline-success', { type: 'submit', value: 'Connect to swarm' })
+        )
+      )
     ),
-    h('button.btn.btn-outline-secondary', { onclick: privateSwarm }, 'Create private swarm'),
+    h('button.btn.btn-outline-secondary',
+      { onclick: privateSwarm, title: 'Generate a difficult to guess swarm name' },
+      'Create private swarm'
+    ),
     h('hr'),
-    h('ul', Object.keys(state.settings.swarms).filter(s => !state.settings.swarms[s]).map(displaySwarm))
+    state.settings.swarms
+      ? h('ul', Object.keys(state.settings.swarms).filter(s => !state.settings.swarms[s]).map(displaySwarm))
+      : undefined
   ))
 
   function updateJoinSwarmName (event) {
@@ -47,10 +65,30 @@ function view (state, emit) {
     const connectSwarm = ConnectSwarm(swarm)
 
     const toggleSwarm = state.settings.swarms[swarm]
-      ? h('button.btn.btn-outline-danger', { onclick: unSwarm }, 'Disconnect')
-      : h('button.btn.btn-outline-success', { onclick: connectSwarm }, 'Connect')
+      ? h('button.btn.btn-outline-danger.btn-sm', { onclick: unSwarm }, 'Disconnect')
+      : h('button.btn.btn-outline-success.btn-sm', { onclick: connectSwarm }, 'Connect')
 
-    return h('li', swarm, toggleSwarm)
+    return h('li',
+      h('code.text-reset', swarm, ' '),
+      h('button.btn.btn-outline-secondary.btn-sm',
+        { onclick: copyToClipboard(swarm), title: 'Copy swarm name to clipboard' },
+        icons.use('clipboard')
+      ),
+      ' ',
+      toggleSwarm
+    )
+  }
+
+  function copyToClipboard (text) {
+    return function () {
+      const listener = function (ev) {
+        ev.preventDefault()
+        ev.clipboardData.setData('text/plain', text)
+      }
+      document.addEventListener('copy', listener)
+      document.execCommand('copy')
+      document.removeEventListener('copy', listener)
+    }
   }
 
   function ConnectSwarm (swarm) {

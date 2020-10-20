@@ -2,6 +2,7 @@ const createRequest = require('../request')
 const h = require('hyperscript')
 // const { readableBytes } = require('../util')
 const icons = require('../icons')
+const { spinner } = require('../components')
 
 module.exports = function (state, emit, content) {
   const request = createRequest(state.connectionSettings)
@@ -21,31 +22,71 @@ module.exports = function (state, emit, content) {
       // h('button.navbar-toggler', { type: 'button', 'data-toggle': 'collapse', 'data-target': '#navbarSupportedContent', 'aria-controls': 'navbarSupportedContent', 'aria-expanded': 'false', 'aria-label': 'Toggle navigation' },
       //   h('span.navbar-toggler-icon')
       // ),
-      h('p.navbar-brand', h('code', 'metadb')),
+      h('p.navbar-brand', h('code.text-reset', 'metadb')),
       // h('div.collapse.navbar-collapse', { id: 'navbarSupportedContent' },
       h('ul.navbar-nav.mr-auto',
+
         h(`li.nav-item${(state.route === 'connection') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#connection' }, icons.use('hdd-network'), ' connections ', h('small', h('strong', swarms.length)))
+          { title: `Connected to ${swarms.length} swarm${swarms.length === 1 ? '' : 's'}` },
+          h('a.nav-link', { href: '#connection' },
+            icons.use('hdd-network'),
+            ' connections ',
+            h('small', h('strong', swarms.length))
+          )
         ),
 
         h(`li.nav-item${(state.route === '/') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#' }, icons.use('files'), ' files ', h('small', h('strong', state.settings.filesInDb || spinner())))
+          { title: `${state.settings.filesInDb} files in database` },
+          h('a.nav-link', { href: '#' },
+            icons.use('files'),
+            ' files ',
+            h('small', h('strong',
+              state.settings.filesInDb === undefined
+                ? spinner()
+                : state.settings.filesInDb
+            )),
+            state.wsEvents.syncing ? 'SYNCING' : ''
+          )
         ),
 
         h(`li.nav-item${(state.route === 'shares') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#shares' }, icons.use('server'), ' shares ', h('small', h('strong', numberShares)))
+          { title: state.wsEvents.indexingFiles
+            ? `Indexing directory ${state.wsEvents.indexingFiles}`
+            : `Sharing ${numberShares} files`
+          },
+          h('a.nav-link', { href: '#shares' },
+            icons.use('server'),
+            ' shares ',
+            state.wsEvents.indexingFiles
+              ? spinner()
+              : h('small', h('strong', numberShares))
+          )
         ),
 
         h(`li.nav-item${(state.route === 'peers') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#peers' }, icons.use('people'), ' peers ', h('small', h('strong', numberConnectedPeers)))
+          { title: numberConnectedPeers === 0
+            ? 'No connected peers'
+            : `Connected to ${numberConnectedPeers} peer${numberConnectedPeers === 1 ? '' : 's'}`
+          },
+          h('a.nav-link', { href: '#peers' },
+            icons.use('people'),
+            ' peers ',
+            h('small', h('strong', numberConnectedPeers))
+          )
         ),
 
         h(`li.nav-item${(state.route === 'settings') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#settings' }, icons.use('gear'), ' settings')
+          h('a.nav-link', { href: '#settings' },
+            icons.use('gear'),
+            ' settings'
+          )
         ),
 
         h(`li.nav-item${(state.route === 'transfers') ? '.active' : ''}`,
-          h('a.nav-link', { href: '#transfers' }, icons.use('arrow-down-up'), ' transfers')
+          h('a.nav-link', { href: '#transfers' },
+            icons.use('arrow-down-up'),
+            ' transfers'
+          )
         )
       ),
       h('form.form-inline.my-2.my-lg-0', { onsubmit: submitSearch },
@@ -71,20 +112,6 @@ module.exports = function (state, emit, content) {
 
   function updateSearchterm (event) {
     state.searchterm = event.target.value
-  }
-
-  function displayConnections () {
-    if (!state.settings.swarms) return ''
-    const swarms = Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s])
-    return swarms.length
-      ? `Connected to ${swarms.length} swarm${swarms.length === 1 ? '' : 's'}.`
-      : 'Not connected.'
-  }
-
-  function displayConnectedPeers () {
-    return state.settings.connectedPeers
-      ? JSON.stringify(state.settings.connectedPeers)
-      : ''
   }
 
   function connectionError () {
@@ -118,10 +145,4 @@ module.exports = function (state, emit, content) {
       })
       .catch(console.log)
   }
-}
-
-function spinner () {
-  return h('div.spinner-border.spinner-border-sm', { role: 'status' },
-    h('span.sr-only', 'Loading...')
-  )
 }

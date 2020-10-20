@@ -2,6 +2,7 @@ const h = require('hyperscript')
 const TITLE = 'metadb - peers'
 const basic = require('./basic')
 const { filesView } = require('./files')
+const { createDisplayPeer } = require('../components')
 
 module.exports = view
 
@@ -12,8 +13,7 @@ function view (state, emit) {
     peer.name = peer.name || peer.feedId
     return basic(state, emit,
       h('div',
-        // h('h3', `${peer.name} - ${peer.numberFiles} files`),
-        h('h3', `${peer.name} - ${peer.files} files`),
+        h('h3', createDisplayPeer(state, { short: true })(peer)),
         filesView(state, emit, 'files')
       )
     )
