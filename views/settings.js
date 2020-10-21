@@ -7,7 +7,9 @@ function view (state, emit) {
   const request = createRequest(state.connectionSettings)
   const success = state.updateSuccessful
   state.updateSuccessful = false
-  state.setName = state.settings.peerNames[state.settings.key]
+  state.setName = state.settings.peerNames
+    ? state.settings.peerNames[state.settings.key]
+    : ''
   state.setDownloadPath = state.settings.downloadPath
   return basic(state, emit,
     h('div',

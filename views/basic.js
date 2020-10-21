@@ -1,6 +1,5 @@
 const createRequest = require('../request')
 const h = require('hyperscript')
-// const { readableBytes } = require('../util')
 const icons = require('../icons')
 const { spinner } = require('../components')
 
@@ -14,6 +13,10 @@ module.exports = function (state, emit, content) {
     : 0
   const me = state.peers.find(p => p.feedId === state.settings.key)
   const numberShares = me ? me.files || 0 : 0
+
+  const downloading = state.wsEvents.download
+    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded).length
+    : false
 
   state.searchterm = ''
 
@@ -45,7 +48,8 @@ module.exports = function (state, emit, content) {
                 ? spinner()
                 : state.settings.filesInDb
             )),
-            state.wsEvents.syncing ? 'SYNCING' : ''
+            state.wsEvents.syncing ? 'SYNCING' : '',
+            state.wsEvents.dbIndexing ? 'INDEXING' : ''
           )
         ),
 
@@ -83,9 +87,11 @@ module.exports = function (state, emit, content) {
         ),
 
         h(`li.nav-item${(state.route === 'transfers') ? '.active' : ''}`,
+          { title: downloading ? 'Downloading...' : 'Uploads and downloads' },
           h('a.nav-link', { href: '#transfers' },
             icons.use('arrow-down-up'),
-            ' transfers'
+            ' transfers ',
+            downloading ? spinner() : undefined
           )
         )
       ),

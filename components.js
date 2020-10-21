@@ -19,7 +19,7 @@ module.exports = {
         files,
         bytes,
         isMe ? ' (You)' : '',
-        connected ? ' connected' : ''
+        connected ? ' - Connected' : ''
       )
 
       if (options.short) return toDisplay

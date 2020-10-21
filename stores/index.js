@@ -29,6 +29,11 @@ module.exports = function createStores (defaultSettings) {
           emitter.emit('shares')
         }
 
+        // If we have finished indexing, update totals
+        if (message.dbIndexing === false) {
+          emitter.emit('settings')
+        }
+
         if (message.download && message.download.downloadComplete) {
           emitter.emit('transfers')
         }

@@ -19,7 +19,7 @@ function view (state, emit) {
   if (file) {
     if (file.dir) {
       return basic(state, emit, h('div',
-        h('h3', file.dir),
+        h('h3', h('code.text-reset', file.dir)),
         h('button', { type: 'button', onclick: requestContainingDirectory }, 'Request directory')
       ))
     } else {
@@ -32,10 +32,12 @@ function view (state, emit) {
       return basic(state, emit, h('div',
         filenames.map((filename) => {
           return h('h3',
-            h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, '/'),
-            ' ',
-            path.dirname(filename).split('/').map(subdir),
-            path.basename(filename)
+            h('code.text-reset',
+              h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, '/'),
+              ' ',
+              path.dirname(filename).split('/').map(subdir),
+              path.basename(filename)
+            )
           )
         }),
         h('div', requested
@@ -119,6 +121,7 @@ function view (state, emit) {
       )
     }
 
+
     if (value === [] || value === {} || !value) value = ''
 
     if (Array.isArray(value)) {
@@ -134,6 +137,8 @@ function view (state, emit) {
         <ul>${Object.keys(value).map(k => item(k, value[k]))}</ul>
         `
     }
+
+    if (['sha256', 'filename'].includes(key)) value = h('code.text-reset', value)
 
     if (key === 'text' || key === 'pdfText') {
       value = value.replace(/(?:\r\n|\r|\n)/g, '<br>')
