@@ -16,6 +16,7 @@ function view (state, emit) {
   return basic(state, emit,
     h('div',
       h('h3', 'Queued for download:'),
+      h('small.text-muted', 'Will be downloaded when a peer which has the file is online and has a download-slot free'),
       h('ul', state.request.map(displayWishListItem)),
       h('h3', 'Downloading:'),
       h('table',
@@ -48,6 +49,34 @@ function view (state, emit) {
     )
   )
 
+  function displayWishListItem (file) {
+    const isDownloading = downloadingFiles.find(f => state.wsEvents.download[f].hash === file.sha256)
+    // TODO
+    return h('li',
+      h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
+      ' held by: ', file.holders.map(displayPeer),
+      ' ',
+      h('button.btn.btn-sm.btn-outline-danger', { onclick: unrequest(file.sha256) }, 'Cancel request'),
+      isDownloading ? ' ISDOWNLOADING!' : ''
+    )
+  }
+
+  function displayDownloadingFile (name) {
+    const properties = state.wsEvents.download[name]
+    const bytesRecieved = properties.bytesRecieved || 0
+    const size = properties.size || 0
+    const percentage = Math.round(bytesRecieved / size * 100)
+    return h('tr',
+      h('td',
+        `${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`
+      ),
+      h('td',
+        '---------',
+        progressBar(percentage)
+      )
+    )
+  }
+
   function displayDownloadedFile (file) {
     const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
 
@@ -72,60 +101,18 @@ function view (state, emit) {
     return h('a', { href: `#peers/${peer.feedId}` }, icons.use('person'), peer.name || peer.feedId)
   }
 
-  function displayWishListItem (file) {
-    // TODO
-    return h('li',
-      h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
-      ' held by: ', file.holders.map(displayPeer)
-      // h('button', { onclick: unrequest(file.sha256) }, 'Remove from wishlist')
-    )
+
+  function unrequest (files) {
+    if (!Array.isArray(files)) files = [files]
+    return function () {
+      request.delete('/request', { data: { files } })
+        .then((res) => {
+          emit('transfers')
+        })
+        .catch(console.log) // TODO
+    }
   }
 
-  // function unrequest (files) {
-  //   if (!Array.isArray(files)) files = [files]
-  //   request.delete('/request', { data: { files } })
-  //     .then((res) => {
-  //       emit('transfers')
-  //     })
-  //     .catch(console.log) // TODO
-  // }
-
-  // function displayCompleteFile (name) {
-  //   const hash = state.wsEvents.download[name].hash
-  //   const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
-  //   const properties = state.wsEvents.download[name]
-  //   const verifiedMessage = properties.verified
-  //     ? 'File Verified.'
-  //     : properties.cannotVerify ? 'HASH DOES NOT MATCH' : ''
-  //   return h(
-  //     'li',
-  //     `${name} ${verifiedMessage}`,
-  //     // h('button', { onclick: openLocal(name) }, 'Open file locally'),
-  //     h('a', { href: `${hostAndPort}/downloads/${hash}`, target: '_blank' }, 'Open/download file in browser')
-  //   )
-  // }
-
-  // function openLocal (file) {
-  //   request.post('/open', { file })
-  //     .then((res) => {
-  //     })
-  //     .catch(console.log)
-  // }
-
-  function displayDownloadingFile (name) {
-    const properties = state.wsEvents.download[name]
-    const bytesRecieved = properties.bytesRecieved || 0
-    const size = properties.size || 0
-    const percentage = Math.round(bytesRecieved / size * 100)
-    return h('tr',
-      h('td',
-        `${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`
-      ),
-      h('td',
-        progressBar(percentage)
-      )
-    )
-  }
 
   function progressBar (perc) {
     return h('div.progress',

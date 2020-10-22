@@ -121,7 +121,6 @@ function view (state, emit) {
       )
     }
 
-
     if (value === [] || value === {} || !value) value = ''
 
     if (Array.isArray(value)) {

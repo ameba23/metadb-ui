@@ -19,7 +19,7 @@ function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   return basic(state, emit,
     h('div',
-      h('button.btn.btn-outline-secondary', { onclick: function () { emit('chronological') } }, 'Recently added'),
+      h('button.btn.btn-outline-secondary.btn-sm', { onclick: function () { emit('chronological') } }, 'Recently added'),
       filesView(state, emit, 'files', { noFilesMessage: mainNoFilesMessage })
     )
   )

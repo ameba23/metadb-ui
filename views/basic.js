@@ -48,8 +48,9 @@ module.exports = function (state, emit, content) {
                 ? spinner()
                 : state.settings.filesInDb
             )),
-            state.wsEvents.syncing ? 'SYNCING' : '',
-            state.wsEvents.dbIndexing ? 'INDEXING' : ''
+            (state.wsEvents.syncing || state.wsEvents.dbIndexing)
+              ? spinner()
+              : undefined
           )
         ),
 
@@ -122,7 +123,7 @@ module.exports = function (state, emit, content) {
 
   function connectionError () {
     return h('span',
-      h('h2', `Error when trying to connect to the API on
+      h('h2.bg-danger', `Error when trying to connect to the API on
         ${state.connectionSettings.host}:${state.connectionSettings.port}.`),
       h('h3', 'Is the metadb API running?'),
       h('form', { id: 'connection', onsubmit: onSubmitConnection },
