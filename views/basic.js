@@ -25,7 +25,7 @@ module.exports = function (state, emit, content) {
       // h('button.navbar-toggler', { type: 'button', 'data-toggle': 'collapse', 'data-target': '#navbarSupportedContent', 'aria-controls': 'navbarSupportedContent', 'aria-expanded': 'false', 'aria-label': 'Toggle navigation' },
       //   h('span.navbar-toggler-icon')
       // ),
-      h('p.navbar-brand', h('code.text-reset', 'metadb')),
+      h('p.navbar-brand', icons.logo()),
       // h('div.collapse.navbar-collapse', { id: 'navbarSupportedContent' },
       h('ul.navbar-nav.mr-auto',
 

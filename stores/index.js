@@ -139,7 +139,10 @@ module.exports = function createStores (defaultSettings) {
         state.request = response.data
         request.get('/downloads').then((response) => {
           state.downloads = response.data
-          emitter.emit('render')
+          request.get('/uploads').then((response) => {
+            state.uploads = response.data
+            emitter.emit('render')
+          }).catch(handleError)
         }).catch(handleError)
       }).catch(handleError)
     })

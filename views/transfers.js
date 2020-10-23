@@ -15,49 +15,68 @@ function view (state, emit) {
 
   return basic(state, emit,
     h('div',
-      h('h3', 'Queued for download:'),
-      h('small.text-muted', 'Will be downloaded when a peer which has the file is online and has a download-slot free'),
-      h('ul', state.request.map(displayWishListItem)),
-      h('h3', 'Downloading:'),
-      h('table',
-        h('thead',
-          h('tr',
-            h('th', 'Name'),
-            h('th', '')
+      h('div.row',
+        h('div.col',
+          h('h3', 'Queued for download:'),
+          h('small.text-muted', 'Will be downloaded when a peer who has the file is online and has a download-slot free'),
+          h('ul', state.request.sort(namesSort).map(displayWishListItem)),
+          h('h3', 'Downloaded'),
+          h('table.table',
+            h('thead',
+              h('tr',
+                h('th', 'Filename'),
+                h('th', 'From'),
+                h('th', ''),
+                h('th', '')
+              )
+            ),
+            h('tbody',
+              state.downloads.map(displayDownloadedFile)
+            )
           )
         ),
-        h('tbody',
-          downloadingFiles.map(displayDownloadingFile)
-        )
-      ),
-      h('h3', 'Requests received:'),
-      h('ul', h('li', JSON.stringify(state.wsEvents.uploadQueue))),
-      h('h3', 'Downloaded'),
-      h('table.table',
-        h('thead',
-          h('tr',
-            h('th', 'Filename'),
-            h('th', 'From'),
-            h('th', ''),
-            h('th', '')
+        h('div.col',
+          h('h3', 'Requests received:'),
+          state.wsEvents.uploadQueue
+            ? h('ul', state.wsEvents.uploadQueue.map(displayUploadQueueItem))
+            : undefined,
+          JSON.stringify(state.wsEvents.upload),
+          h('h3', 'Uploaded'),
+          h('table.table',
+            h('thead',
+              h('tr',
+                h('th', 'Filename'),
+                h('th', 'To'),
+                h('th', '')
+              )
+            ),
+            h('tbody',
+              state.uploads.map(displayUploadedFile)
+            )
           )
-        ),
-        h('tbody',
-          state.downloads.map(displayDownloadedFile)
         )
       )
     )
   )
 
+  function displayUploadQueueItem (item) {
+    return h('li', displayPeer(item.sender),
+      h('ul', item.requestMessage.files.map(f => 'boop'))
+    )
+  }
+
   function displayWishListItem (file) {
-    const isDownloading = downloadingFiles.find(f => state.wsEvents.download[f].hash === file.sha256)
+    if (!Array.isArray(file.filename)) file.filename = [file.filename]
+    const isDownloading = downloadingFiles.find(f => file.filename.includes(f))
     // TODO
     return h('li',
       h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
       ' held by: ', file.holders.map(displayPeer),
       ' ',
       h('button.btn.btn-sm.btn-outline-danger', { onclick: unrequest(file.sha256) }, 'Cancel request'),
-      isDownloading ? ' ISDOWNLOADING!' : ''
+      isDownloading
+        ? displayDownloadingFile(isDownloading)
+        : undefined
     )
   }
 
@@ -66,14 +85,17 @@ function view (state, emit) {
     const bytesRecieved = properties.bytesRecieved || 0
     const size = properties.size || 0
     const percentage = Math.round(bytesRecieved / size * 100)
+    return h('span',
+      `${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`,
+      progressBar(percentage)
+    )
+  }
+
+  function displayUploadedFile (file) {
     return h('tr',
-      h('td',
-        `${name}: ${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`
-      ),
-      h('td',
-        '---------',
-        progressBar(percentage)
-      )
+      h('td', h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.name))),
+      h('td', displayPeer(file.to)),
+      h('td', h('small', new Date(parseInt(file.timestamp)).toLocaleString()))
     )
   }
 
@@ -82,7 +104,7 @@ function view (state, emit) {
 
     return h('tr',
       h('td',
-        h('a', { href: `#files/${file.hash}` }, file.name),
+        h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.name)),
         file.verified ? h('span.text-success', { title: 'File verified' }, icons.use('check')) : h('strong.text-danger', 'Not verified!')
       ),
       h('td', displayPeer(file.from)),
@@ -90,7 +112,7 @@ function view (state, emit) {
         h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
       ),
       h('td',
-        h('small', Date(file.timestamp))
+        h('small', new Date(parseInt(file.timestamp)).toLocaleString())
       )
     )
   }
@@ -100,7 +122,6 @@ function view (state, emit) {
     if (!peer) return feedId
     return h('a', { href: `#peers/${peer.feedId}` }, icons.use('person'), peer.name || peer.feedId)
   }
-
 
   function unrequest (files) {
     if (!Array.isArray(files)) files = [files]
@@ -113,10 +134,17 @@ function view (state, emit) {
     }
   }
 
-
   function progressBar (perc) {
     return h('div.progress',
       h('div.progress-bar.bg-success', { role: 'progressbar', style: `width: ${perc}%`, 'aria-valuenow': perc, 'aria-valuemin': '0', 'aria-valuemax': '100' }, perc)
     )
+  }
+
+  function namesSort (a, b) {
+    const A = a.filename[0]
+    const B = b.filename[0]
+    if (A < B) return -1
+    if (A > B) return 1
+    return 0
   }
 }

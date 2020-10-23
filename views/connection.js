@@ -10,9 +10,7 @@ function view (state, emit) {
   state.joinSwarmName = ''
   return basic(state, emit, h('div',
     h('h3', 'Connections'),
-    state.settings.swarms
-      ? h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm))
-      : undefined,
+    h('small.text-muted', 'Connect to other peers by meeting on a swarm "topic".'),
     h('form', { id: 'swarmtopic', onsubmit: onSubmit },
       h('div.input-group.mb-3',
         h('input.form-control', {
@@ -32,6 +30,9 @@ function view (state, emit) {
       { onclick: privateSwarm, title: 'Generate a difficult to guess swarm name' },
       'Create private swarm'
     ),
+    state.settings.swarms
+      ? h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm))
+      : undefined,
     h('hr'),
     state.settings.swarms
       ? h('ul', Object.keys(state.settings.swarms).filter(s => !state.settings.swarms[s]).map(displaySwarm))
