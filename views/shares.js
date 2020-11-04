@@ -93,7 +93,7 @@ function view (state, emit) {
     e.preventDefault()
     request.post('/files/index', { dir: state.dirToShare })
       .then((res) => {
-        emit('indexFiles', res)
+        // emit('indexFiles', res)
       })
       .catch(console.log)
   }

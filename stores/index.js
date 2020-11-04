@@ -32,6 +32,7 @@ module.exports = function createStores (defaultSettings) {
         // If we have finished indexing, update totals
         if (message.dbIndexing === false) {
           emitter.emit('settings')
+          emitter.emit('navigate') // TODO unsure about this
         }
 
         if (message.download && message.download.downloadComplete) {

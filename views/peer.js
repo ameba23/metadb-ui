@@ -14,10 +14,20 @@ function view (state, emit) {
     return basic(state, emit,
       h('div',
         h('h3', createDisplayPeer(state, { short: true })(peer)),
+        peer.stars.length
+          ? h('div',
+            h('h4', 'Starred files'),
+            h('ul', peer.stars.map(displayStarredFile))
+          )
+          : undefined,
         filesView(state, emit, 'files')
       )
     )
   } else {
     return basic(state, emit, h('p', 'Peer not found'))
+  }
+
+  function displayStarredFile (star) {
+    return h('li', h('a', { href: `#files/${star}` }, star))
   }
 }

@@ -12,6 +12,7 @@ module.exports = {
       const files = peer.files ? ` - ${peer.files} files. ` : undefined
       const bytes = peer.bytes ? `${readableBytes(peer.bytes)} ` : undefined
       const connected = state.settings.connectedPeers.includes(peer.feedId)
+      const stars = peer.stars ? ` ${peer.stars.length} starred files` : undefined
 
       const toDisplay = h('span',
         icons.use('person'),
@@ -19,17 +20,19 @@ module.exports = {
         files,
         bytes,
         isMe ? ' (You)' : '',
-        connected ? ' - Connected' : ''
+        connected ? ' - Connected' : '',
+        stars
       )
 
       if (options.short) return toDisplay
 
-      return h('li',
-        h(`a.${connected || isMe ? 'text-success' : 'text-secondary'}`,
-          { href: `#peers/${peer.feedId}` },
-          toDisplay
-        )
+      const link = h(`a.${connected || isMe ? 'text-success' : 'text-secondary'}`,
+        { href: `#peers/${peer.feedId}` },
+        toDisplay
       )
+
+      if (options.link) return link
+      return h('li', link)
     }
   },
 

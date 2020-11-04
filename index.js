@@ -7,7 +7,9 @@ var app = choo()
 
 const defaultSettings = {
   host: `http${process.env.https ? 's' : ''}://${process.env.host || 'localhost'}`,
-  port: process.env.port || 2323
+  port: process.env.port || 2323,
+  basicAuthUser: process.env.basicAuthUser,
+  basicAuthPassword: process.env.basicAuthPassword
 }
 
 // TODO this would need to be updated when defaultsettings are updated

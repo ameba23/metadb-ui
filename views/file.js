@@ -16,6 +16,7 @@ function view (state, emit) {
   const request = createRequest(state.connectionSettings)
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const file = state.file
+
   state.newComment = ''
   if (file) {
     if (file.dir) {
@@ -60,14 +61,30 @@ function view (state, emit) {
         }),
         item(null, file),
         h('form', { id: 'comment', onsubmit: onSubmitComment },
-          h('input', { type: 'text', id: 'comment', value: state.newComment, name: 'comment', oninput: updateNewComment }),
-          h('input.btn.btn-outline-secondary', { type: 'submit', value: 'add comment' })
+          h('div.input-group.mb-3',
+            h('input.form-control', { type: 'text', id: 'comment', value: state.newComment, name: 'comment', oninput: updateNewComment, placeholder: 'add a comment' }),
+            h('div.input-group-append',
+              h('input.btn.btn-outline-secondary', { type: 'submit', value: 'comment' })
+            )
+          )
         ),
-        h('button.btn.btn-outline-secondary', 'star')
+        h('button.btn.btn-outline-secondary', { onclick: star }, 'star')
       ))
     }
   } else {
     return basic(state, emit, h('p', 'File not found'))
+  }
+
+  function publishComment (commentMessage) {
+    request.post(`/files/${file.sha256}`, commentMessage)
+      .then((res) => {
+        // emit('updateComments', res)
+      })
+      .catch(console.log)
+  }
+
+  function star () {
+    publishComment({ star: true })
   }
 
   function updateNewComment (event) {
@@ -76,11 +93,7 @@ function view (state, emit) {
 
   function onSubmitComment (e) {
     e.preventDefault()
-    request.post(`/files/${file.sha256}`, { comment: state.newComment })
-      .then((res) => {
-        emit('updateComments', res)
-      })
-      .catch(console.log)
+    publishComment({ comment: state.newComment })
   }
 
   function requestFile () {
@@ -118,6 +131,27 @@ function view (state, emit) {
     }
 
     if (value === [] || value === {} || !value) value = ''
+
+    if (key === 'comments') {
+      return h('li',
+        h('strong', 'Comments:'),
+        h('ul', value.map((commentObject) => {
+          return h('li',
+            components.createDisplayPeer(state, { link: true })(commentObject.author),
+            ' ',
+            commentObject.comment // TODO markdown?
+          )
+        }))
+      )
+    }
+
+    if (key === 'stars') {
+      return h('li',
+        h('strong', 'Starred by:'),
+        h('ul', value.map(components.createDisplayPeer(state)))
+        // TODO if it includes us, add unstar button
+      )
+    }
 
     if (Array.isArray(value)) {
       value = value.length > 1
