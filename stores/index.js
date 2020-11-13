@@ -2,16 +2,21 @@ const createRequest = require('../request')
 
 module.exports = function createStores (defaultSettings) {
   return function (state, emitter) {
-    state.files = []
-    state.peers = []
-    state.request = []
-    state.settings = {}
-    state.settings.connectedPeers = []
-    state.wsEvents = {}
-    state.downloads = {}
-    state.shareTotals = []
+    Object.assign(state, {
+      files: [],
+      peers: [],
+      request: [],
+      settings: {
+        connectedPeers: []
+      },
+      wsEvents: {},
+      downloads: {},
+      shareTotals: [],
+      wallMessages: {},
+      newWallMessages: {},
+      connectionSettings: defaultSettings
+    })
 
-    state.connectionSettings = defaultSettings
     const request = createRequest(state.connectionSettings)
 
     emitter.on('ws:open', () => {
@@ -33,6 +38,12 @@ module.exports = function createStores (defaultSettings) {
         if (message.dbIndexing === false) {
           emitter.emit('settings')
           emitter.emit('navigate') // TODO unsure about this
+        }
+
+        if (message.updateWallMessages) {
+          // TODO rather than doing more requests, send the new
+          // msgs over ws
+          emitter.emit('getAllWallMessages')
         }
 
         if (message.download && message.download.downloadComplete) {
@@ -87,6 +98,9 @@ module.exports = function createStores (defaultSettings) {
               state.file = response.data
               emitter.emit('render')
             }).catch(handleError)
+          break
+        case 'connection':
+          emitter.emit('getAllWallMessages')
           break
       }
     })
@@ -156,7 +170,23 @@ module.exports = function createStores (defaultSettings) {
 
     emitter.on('updateConnection', (res) => {
       state.settings.swarms = res.data
+      emitter.emit('getAllWallMessages')
       emitter.emit('render')
+    })
+
+    emitter.on('getAllWallMessages', () => {
+      Object.keys(state.settings.swarms)
+        .filter(s => state.settings.swarms[s])
+        .forEach((swarm) => {
+          emitter.emit('getWallMessages', swarm)
+        })
+    })
+    emitter.on('getWallMessages', (swarmKey) => {
+      request.post('/wall-message/by-swarm-key', { swarmKey })
+        .then((response) => {
+          state.wallMessages[swarmKey] = response.data
+          emitter.emit('render')
+        }).catch(handleError)
     })
 
     emitter.on('updateSettings', (res) => {

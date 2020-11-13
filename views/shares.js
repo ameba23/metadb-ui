@@ -23,13 +23,13 @@ function view (state, emit) {
           )
         )
       ),
-      h('pre.pre-scrollable', state.wsEvents.indexerLog),
       (state.wsEvents.indexQueue && state.wsEvents.indexQueue.length)
         ? h('div',
           h('h4', 'Being indexed:'),
           h('ul', state.wsEvents.indexQueue.map(displayIndexQueueItem))
         )
         : undefined,
+      indexerLog(),
       // h('p', JSON.stringify(state.shareTotals)),
       h('h4', 'Shared folders'),
       h('ul',
@@ -43,7 +43,7 @@ function view (state, emit) {
     const beingIndexed = state.wsEvents.indexingFiles === dir
     return h('li',
       beingIndexed ? spinner() : icons.use('folder'),
-      dir,
+      h('code.text-reset', dir),
       ' ',
       beingIndexed
         ? h('span',
@@ -114,5 +114,16 @@ function view (state, emit) {
         // TODO
       })
       .catch(console.log)
+  }
+
+  function indexerLog () {
+    return (state.wsEvents.indexLog && state.wsEvents.indexLog.length)
+      ? h('div.card',
+        h('div.card-header', 'Indexer console output'),
+        h('div.card-body',
+          h('pre.pre-scrollable', state.wsEvents.indexerLog)
+        )
+      )
+      : undefined
   }
 }

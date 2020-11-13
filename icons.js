@@ -46,6 +46,16 @@ module.exports = {
     <symbol viewBox="0 0 16 16" class="bi bi-file" fill="currentColor" id="file" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" d="M4 0h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2a2 2 0 012-2zm0 1a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V2a1 1 0 00-1-1H4z" />
     </symbol>
+    <symbol viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" id="search" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 011.415 0l3.85 3.85a1 1 0 01-1.414 1.415l-3.85-3.85a1 1 0 010-1.415z" />
+        <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 100-11 5.5 5.5 0 000 11zM13 6.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+    </symbol>
+    <symbol viewBox="0 0 16 16" class="bi bi-bricks" fill="currentColor" id="bricks" xmlns="http://www.w3.org/2000/svg">
+        <path
+            fill-rule="evenodd"
+            d="M0 .5A.5.5 0 01.5 0h15a.5.5 0 01.5.5v3a.5.5 0 01-.5.5H14v2h1.5a.5.5 0 01.5.5v3a.5.5 0 01-.5.5H14v2h1.5a.5.5 0 01.5.5v3a.5.5 0 01-.5.5H.5a.5.5 0 01-.5-.5v-3a.5.5 0 01.5-.5H2v-2H.5a.5.5 0 01-.5-.5v-3A.5.5 0 01.5 6H2V4H.5a.5.5 0 01-.5-.5v-3zM3 4v2h4.5V4H3zm5.5 0v2H13V4H8.5zM3 10v2h4.5v-2H3zm5.5 0v2H13v-2H8.5zM1 1v2h3.5V1H1zm4.5 0v2H15V1H5.5zM1 7v2h3.5V7H1zm4.5 0v2h5V7h-5zm6 0v2H15V7h-3.5zM1 13v2h3.5v-2H1zm4.5 0v2h5v-2h-5zm6 0v2H15v-2h-3.5z"
+        />
+    </symbol>
 </svg>`
   },
   use (id) {

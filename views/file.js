@@ -135,11 +135,12 @@ function view (state, emit) {
     if (key === 'comments') {
       return h('li',
         h('strong', 'Comments:'),
-        h('ul', value.map((commentObject) => {
-          return h('li',
-            components.createDisplayPeer(state, { link: true })(commentObject.author),
-            ' ',
-            commentObject.comment // TODO markdown?
+        h('table', value.map((commentObject) => {
+          return h('tr',
+            h('td', components.createDisplayPeer(state, { linkOnly: true, veryShort: true })(commentObject.author)),
+            h('td',
+              components.markdown(commentObject.comment)
+            )
           )
         }))
       )
@@ -148,7 +149,7 @@ function view (state, emit) {
     if (key === 'stars') {
       return h('li',
         h('strong', 'Starred by:'),
-        h('ul', value.map(components.createDisplayPeer(state)))
+        h('ul', value.map(components.createDisplayPeer(state, { veryShort: true })))
         // TODO if it includes us, add unstar button
       )
     }
@@ -169,9 +170,10 @@ function view (state, emit) {
 
     if (['sha256', 'filename'].includes(key)) value = h('code.text-reset', value)
 
-    if (key === 'text' || key === 'pdfText') {
+    if (key === 'text' || key === 'pdfText' || key === 'previewText') {
       value = value.replace(/(?:\r\n|\r|\n)/g, '<br>')
         .split('<br>').map(line => html`${line}<br>`)
+      return h('li', h('strong', 'Preview:'), h('br'), h('code.text-reset', value))
     }
 
     if (key === 'timestamp' && typeof value === 'number') {

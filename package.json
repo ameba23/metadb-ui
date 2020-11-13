@@ -19,6 +19,8 @@
     "envify": "^4.1.0",
     "hyperscript": "^2.0.2",
     "indexhtmlify": "^2.0.0",
+    "marked": "^1.2.3",
+    "nanohtml": "^1.9.1",
     "sheetify": "^7.4.0"
   },
   "devDependencies": {

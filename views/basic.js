@@ -98,9 +98,9 @@ module.exports = function (state, emit, content) {
       ),
       h('form.form-inline.my-2.my-lg-0', { onsubmit: submitSearch },
         h('div.input-group.mb3',
-          h('input.form-control.mr-sm-2', { type: 'search', id: 'searchterm', value: state.searchterm, name: 'searchterm', oninput: updateSearchterm, 'aria-label': 'Search' }),
+          h('input.form-control', { type: 'search', id: 'searchterm', value: state.searchterm, name: 'searchterm', oninput: updateSearchterm, 'aria-label': 'Search', placeholder: 'Search' }),
           h('div.input-group-append',
-            h('button.btn.btn-success', { type: 'submit', class: 'button-addon2' }, 'Search')
+            h('button.btn.btn-outline-success', { type: 'submit', class: 'button-addon2' }, icons.use('search'))
           )
         )
       )
@@ -125,22 +125,8 @@ module.exports = function (state, emit, content) {
     return h('span',
       h('h2.bg-danger', `Error when trying to connect to the API on
         ${state.connectionSettings.host}:${state.connectionSettings.port}.`),
-      h('h3', 'Is the metadb API running?'),
-      h('form', { id: 'connection', onsubmit: onSubmitConnection },
-        h('p',
-          h('label', { for: 'host' }, 'Host:'),
-          h('input', { type: 'text', id: 'host', name: 'host', value: state.connectionSettings.host }),
-          h('label', { for: 'port' }, ':'),
-          h('input', { type: 'text', id: 'port', name: 'port', value: state.connectionSettings.port })
-        ),
-        h('input', { type: 'submit', value: 'Update connection settings' })
-      ),
-      h('hr')
+      h('h3', `Is the metadb API running at ${state.connectionSettings.host}:${state.connectionSettings.port}? `)
     )
-  }
-
-  function onSubmitConnection (e) {
-    // TODO
   }
 
   function submitSearch (event) {

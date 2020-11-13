@@ -13,7 +13,7 @@ function view (state, emit) {
     h('div',
       h('h2', 'Peers'),
       h('p', `${state.settings.connectedPeers.length} peer${state.settings.connectedPeers.length === 1 ? '' : 's'} connected.`),
-      h('ul', state.peers.map(createDisplayPeer(state)))
+      h('ul', state.peers.map(createDisplayPeer(state, { long: true })))
     )
   )
 }
