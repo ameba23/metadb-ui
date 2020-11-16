@@ -2,7 +2,6 @@ const html = require('choo/html')
 const h = require('hyperscript')
 const path = require('path')
 const TITLE = 'metadb'
-const createRequest = require('../request')
 const { readableBytes, secondsToHms } = require('../util')
 const basic = require('./basic')
 const components = require('../components')
@@ -13,7 +12,7 @@ module.exports = view
 var depth = 0 // TODO is this needed?
 
 function view (state, emit) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const file = state.file
 
@@ -22,13 +21,19 @@ function view (state, emit) {
     if (file.dir) {
       return basic(state, emit, h('div',
         h('h3', h('code.text-reset', file.dir)),
-        h('button', { type: 'button', onclick: requestContainingDirectory(file.dir) }, 'Request directory')
+        h('button', {
+          type: 'button',
+          onclick: function () {
+            emit('requestDirectory', file.dir)
+          }
+        }, 'Request directory')
       ))
     } else {
-      const requested = state.request.find(f => f.sha256 === file.sha256)
+      const requested = state.requests.find(f => f.sha256 === file.sha256)
       const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
       file.holders = file.holders || []
       const isAvailable = file.holders.find(h => state.settings.connectedPeers.includes(h))
+      // const iHave = file.holders.find(h => h === state.settings.key)
 
       const basenames = Array.from(new Set(filenames.map(path.basename)))
       const dirnames = Array.from(new Set(filenames.map(path.dirname)))
@@ -56,7 +61,12 @@ function view (state, emit) {
               dirname.split('/').map(subdir)
             ),
             ' ',
-            h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`, { type: 'button', onclick: requestContainingDirectory(dirname) }, isAvailable ? 'Download directory' : 'Queue directory for download')
+            h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`, {
+              type: 'button',
+              onclick: function () {
+                emit('requestDirectory', dirname)
+              }
+            }, isAvailable ? 'Download directory' : 'Queue directory for download')
           )
         }),
         item(null, file),
@@ -102,20 +112,6 @@ function view (state, emit) {
         emit('transfers', res) // TODO: dont acutally need to pass res
       })
       .catch(console.log) // TODO
-  }
-
-  function requestContainingDirectory (subdir) {
-    return function () {
-      request.post('/files/subdir', { subdir })
-        .then((res) => {
-          const files = res.data.map(f => f.sha256)
-          request.post('/request', { files })
-            .then((res) => {
-              emit('transfers', res) // TODO: dont acutally need to pass res
-            })
-            .catch(console.log) // TODO
-        }).catch(console.log)
-    }
   }
 
   function displayKey (key) {
@@ -202,14 +198,9 @@ function view (state, emit) {
     }, portion), '/')
   }
 
-  function subdirQuery (a) {
+  function subdirQuery (subdir) {
     return () => {
-      state.subdirQuery = Array.isArray(a) ? a.join('/') : a
-      request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
-        .then((res) => {
-          emit('subdirResult', res)
-        })
-        .catch(console.log)
+      emit('subdirQuery', subdir)
     }
   }
 }

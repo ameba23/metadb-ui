@@ -1,9 +1,8 @@
 const h = require('hyperscript')
 const basic = require('./basic')
-// const { readableBytes } = require('../util')
 const { createDisplayPeer } = require('../components')
 const TITLE = 'metadb - peers'
-// const icons = require('../icons')
+
 module.exports = view
 
 function view (state, emit) {

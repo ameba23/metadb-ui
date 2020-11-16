@@ -1,11 +1,13 @@
 const createRequest = require('../request')
 
-module.exports = function createStores (defaultSettings) {
+module.exports = function createStores (connectionSettings) {
   return function (state, emitter) {
+    const request = createRequest(connectionSettings)
+
     Object.assign(state, {
       files: [],
       peers: [],
-      request: [],
+      requests: [],
       settings: {
         connectedPeers: []
       },
@@ -14,10 +16,11 @@ module.exports = function createStores (defaultSettings) {
       shareTotals: [],
       wallMessages: {},
       newWallMessages: {},
-      connectionSettings: defaultSettings
+      connectionSettings,
+      request,
+      indexerLog: '',
+      shares: []
     })
-
-    const request = createRequest(state.connectionSettings)
 
     emitter.on('ws:open', () => {
       console.log('ws: Connection established')
@@ -28,9 +31,10 @@ module.exports = function createStores (defaultSettings) {
       try {
         const message = JSON.parse(data)
         if (message.indexer) {
-          state.wsEvents.indexerLog += message.indexer
+          state.indexerLog += message.indexer
+          emitter.emit('render')
         }
-        if (message.sharedbUpdated) {
+        if (message.sharedbUpdated && state.route === 'shares') {
           emitter.emit('shares')
         }
 
@@ -128,7 +132,6 @@ module.exports = function createStores (defaultSettings) {
     })
     emitter.emit('peers')
 
-    state.shares = []
     emitter.on('shares', () => {
       request.get('/files/shares').then((response) => {
         state.connectionError = false
@@ -151,7 +154,7 @@ module.exports = function createStores (defaultSettings) {
     emitter.on('transfers', (res) => {
       request.get('/request').then((response) => {
         state.connectionError = false
-        state.request = response.data
+        state.requests = response.data
         request.get('/downloads').then((response) => {
           state.downloads = response.data
           request.get('/uploads').then((response) => {
@@ -196,11 +199,6 @@ module.exports = function createStores (defaultSettings) {
       emitter.emit('render')
     })
 
-    emitter.on('subdirResult', (res) => {
-      state.files = res.data
-      emitter.emit('replaceState', '#subdir')
-    })
-
     emitter.on('settings', () => {
       request.get('/settings')
         .then((response) => {
@@ -216,8 +214,30 @@ module.exports = function createStores (defaultSettings) {
       emitter.emit('render')
     })
 
+    emitter.on('requestDirectory', (subdir) => {
+      state.request.post('/files/subdir', { subdir })
+        .then((res) => {
+          const files = res.data.map(f => f.sha256)
+          state.request.post('/request', { files })
+            .then((res) => {
+              emitter.emit('transfers', res) // TODO: dont acutally need to pass res
+            })
+            .catch(handleError) // TODO
+        }).catch(handleError)
+    })
+
+    emitter.on('subdirQuery', (subdirs) => {
+      state.subdirQuery = Array.isArray(subdirs) ? subdirs.join('/') : subdirs
+      request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
+        .then((res) => {
+          state.files = res.data
+          emitter.emit('replaceState', '#subdir')
+        })
+        .catch(console.log)
+    })
+
     function handleError (error) {
-      console.log('error has name', error.message)
+      console.log('Error from store', error.message)
       if (error.message === 'Network Error') {
         state.connectionError = true
         emitter.emit('render')

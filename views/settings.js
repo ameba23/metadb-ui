@@ -1,10 +1,9 @@
 const h = require('hyperscript')
-const createRequest = require('../request')
 const basic = require('./basic')
 module.exports = view
 
 function view (state, emit) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   const success = state.updateSuccessful
   state.updateSuccessful = false
   state.setName = state.settings.peerNames

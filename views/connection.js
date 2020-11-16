@@ -1,5 +1,4 @@
 const h = require('hyperscript')
-const createRequest = require('../request')
 const basic = require('./basic')
 const icons = require('../icons')
 const components = require('../components')
@@ -7,7 +6,7 @@ const components = require('../components')
 module.exports = view
 
 function view (state, emit) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   state.joinSwarmName = state.joinSwarmName || ''
   if (state.selectedSwarm && !state.settings.swarms[state.selectedSwarm]) state.selectedSwarm = undefined
   state.selectedSwarm = state.selectedSwarm || Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s])[0]
@@ -23,20 +22,21 @@ function view (state, emit) {
           value: state.joinSwarmName,
           name: 'swarm',
           oninput: updateJoinSwarmName,
-          placeholder: 'Join or create new swarm'
+          placeholder: 'Join or create new swarm',
+          title: 'A swarm name can be anything you like'
         }),
         h('div.input-group-append',
           h('input.btn.btn-outline-success', { type: 'submit', value: 'Connect to swarm' })
         )
       )
     ),
-    h('button.btn.btn-outline-secondary',
+    h('button.btn.btn-sm.btn-outline-secondary.mb-3',
       { onclick: privateSwarm, title: 'Generate a difficult to guess swarm name' },
       'Create private swarm'
     ),
     h('div.container',
       h('div.card',
-        h('div.card-header', 'Connected swarms'),
+        h('div.card-header', h('h4', 'Connected swarms')),
         state.settings.swarms
           ? h('ul', Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map(displaySwarm))
           : undefined
@@ -46,7 +46,7 @@ function view (state, emit) {
         : undefined,
       h('div.card',
         h('div.card-header',
-          h('h4', icons.use('bricks'), ' Wall messages'),
+          h('h4', { title: 'Wall messages can only be read by peers who know the swarm name' }, icons.use('bricks'), ' Wall messages'),
           h('ul.nav.nav-tabs.card-header-tabs',
             Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s]).map((swarm) => {
               const active = (state.selectedSwarm === swarm) ? '.active' : ''

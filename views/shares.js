@@ -1,5 +1,4 @@
 const basic = require('./basic')
-const createRequest = require('../request')
 const h = require('hyperscript')
 const { filesView } = require('./files')
 const { spinner } = require('../components')
@@ -8,7 +7,7 @@ const icons = require('../icons')
 module.exports = view
 
 function view (state, emit) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   state.dirToShare = state.settings.homeDir
   return basic(state, emit,
     h('div',
@@ -117,11 +116,11 @@ function view (state, emit) {
   }
 
   function indexerLog () {
-    return (state.wsEvents.indexLog && state.wsEvents.indexLog.length)
+    return (state.indexerLog.length)
       ? h('div.card',
         h('div.card-header', 'Indexer console output'),
-        h('div.card-body',
-          h('pre.pre-scrollable', state.wsEvents.indexerLog)
+        h('div.card-body.p-1',
+          h('pre.pre-scrollable', state.indexerLog)
         )
       )
       : undefined

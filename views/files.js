@@ -1,7 +1,6 @@
 const h = require('hyperscript')
 const TITLE = 'metadb'
 const path = require('path')
-const createRequest = require('../request')
 const icons = require('../icons')
 const { readableBytes } = require('../util')
 const basic = require('./basic')
@@ -20,23 +19,39 @@ function view (state, emit) {
   return basic(state, emit,
     h('div',
       h('button.btn.btn-outline-secondary.btn-sm', { onclick: function () { emit('chronological') } }, 'Recently added'),
+      ' ',
+      h('button.btn.btn-outline-secondary.btn-sm', {
+        onclick: function () {
+          emit('subdirQuery', '')
+        }
+      }, 'Directory view'),
       filesView(state, emit, 'files', { noFilesMessage: mainNoFilesMessage })
     )
   )
 }
 
 function filesView (state, emit, files, options = {}) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   const noFilesMessage = options.noFilesMessage || h('p', 'No files to display')
 
   const title = (options.subdirQuery || options.subdirQuery === '')
-    ? h('h2',
-      h('code',
-        h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
-        options.subdirQuery.split('/').filter(e => e !== '').map(subdir)
-      )
+    ? h('div',
+      h('h2',
+        icons.use('folder'),
+        h('code',
+          h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
+          options.subdirQuery.split('/').filter(e => e !== '').slice(0, -1).map(subdir),
+          options.subdirQuery.split('/').slice(-1)[0]
+        )
+      ),
+      h('button.btn.btn-sm.btn-outline-secondary.mb-3', {
+        type: 'button',
+        onclick: function () {
+          emit('requestDirectory', options.subdirQuery)
+        }
+      }, 'Download directory')
     )
-    : options.title ? h('h2', options.title) : h('span')
+    : options.title ? h('h2', options.title) : undefined
 
   return h('div',
     title,
@@ -68,7 +83,7 @@ function filesView (state, emit, files, options = {}) {
     }
 
     const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
-    const requested = state.request.find(f => f.sha256 === file.sha256)
+    const requested = state.requests.find(f => f.sha256 === file.sha256)
     file.holders = file.holders || []
     const iHave = file.holders.find(h => h === state.settings.key)
     const isAvailable = file.holders.find(h => state.settings.connectedPeers.includes(h))
@@ -117,15 +132,9 @@ function filesView (state, emit, files, options = {}) {
     }, h('code', portion)), ' / ')
   }
 
-
-  function subdirQuery (a) {
+  function subdirQuery (subdir) {
     return () => {
-      state.subdirQuery = Array.isArray(a) ? a.join('/') : a
-      request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
-        .then((res) => {
-          emit('subdirResult', res)
-        })
-        .catch(console.log)
+      emit('subdirQuery', subdir)
     }
   }
 

@@ -1,14 +1,13 @@
 const h = require('hyperscript')
 const TITLE = 'metadb - transfers'
 const basic = require('./basic')
-const createRequest = require('../request')
 const icons = require('../icons')
 
 module.exports = view
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   const downloadingFiles = state.wsEvents.download
     ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
     : []
@@ -19,7 +18,7 @@ function view (state, emit) {
         h('div.col',
           h('h3', 'Queued for download:'),
           h('small.text-muted', 'Will be downloaded when a peer who has the file is online and has a download-slot free'),
-          h('ul', state.request.sort(namesSort).map(displayWishListItem)),
+          h('ul', state.requests.sort(namesSort).map(displayWishListItem)),
           h('h3', 'Downloaded'),
           h('table.table',
             h('thead',

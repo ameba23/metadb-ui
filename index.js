@@ -1,9 +1,9 @@
-var css = require('sheetify')
-var choo = require('choo')
+const css = require('sheetify')
+const choo = require('choo')
 
 css('bootstrap')
 
-var app = choo()
+const app = choo()
 
 const defaultSettings = {
   host: `http${process.env.https ? 's' : ''}://${process.env.host || 'localhost'}`,
@@ -12,7 +12,6 @@ const defaultSettings = {
   basicAuthPassword: process.env.basicAuthPassword
 }
 
-// TODO this would need to be updated when defaultsettings are updated
 const wsroute = defaultSettings.host.split('//')[1] + ':' + defaultSettings.port
 console.log(wsroute)
 

@@ -1,10 +1,9 @@
-const createRequest = require('../request')
 const h = require('hyperscript')
 const icons = require('../icons')
 const { spinner } = require('../components')
 
 module.exports = function (state, emit, content) {
-  const request = createRequest(state.connectionSettings)
+  const request = state.request
   const swarms = state.settings.swarms
     ? Object.keys(state.settings.swarms).filter(s => state.settings.swarms[s])
     : []
