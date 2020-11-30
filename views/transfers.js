@@ -81,11 +81,11 @@ function view (state, emit) {
 
   function displayDownloadingFile (name) {
     const properties = state.wsEvents.download[name]
-    const bytesRecieved = properties.bytesRecieved || 0
+    const bytesReceived = properties.bytesReceived || 0
     const size = properties.size || 0
-    const percentage = Math.round(bytesRecieved / size * 100)
+    const percentage = Math.round(bytesReceived / size * 100)
     return h('span',
-      `${properties.bytesRecieved || 0} of ${properties.size || 0} bytes (${percentage}%).`,
+      `${properties.bytesReceived || 0} of ${properties.size || 0} bytes (${percentage}%).`,
       progressBar(percentage)
     )
   }
