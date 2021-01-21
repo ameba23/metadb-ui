@@ -45,6 +45,11 @@ module.exports = {
     }
   },
 
+  getPeerName (state, feedId) {
+    const { name } = state.peers.find(p => p.feedId === feedId) || {}
+    return name
+  },
+
   spinner () {
     return h('div.spinner-border.spinner-border-sm', { role: 'status' },
       h('span.sr-only', 'Loading...')

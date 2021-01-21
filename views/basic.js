@@ -38,14 +38,14 @@ module.exports = function (state, emit, content) {
         ),
 
         h(`li.nav-item${(state.route === '/') ? '.active' : ''}`,
-          { title: `${state.settings.filesInDb} files in database` },
+          { title: `${state.settings.totals.files} files in database` },
           h('a.nav-link', { href: '#' },
             icons.use('files'),
             ' files ',
             h('small', h('strong',
-              state.settings.filesInDb === undefined
+              state.settings.totals.files === undefined
                 ? spinner()
-                : state.settings.filesInDb
+                : state.settings.totals.files
             )),
             (state.wsEvents.syncing || state.wsEvents.dbIndexing)
               ? spinner()

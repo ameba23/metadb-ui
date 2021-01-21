@@ -9,6 +9,7 @@ module.exports = view
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const peer = state.peers.find(peer => peer.feedId === state.params.peerId)
+  peer.stars = peer.stars || 0
   if (peer) {
     peer.name = peer.name || peer.feedId
     return basic(state, emit,

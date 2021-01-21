@@ -9,7 +9,8 @@ module.exports = function createStores (connectionSettings) {
       peers: [],
       requests: [],
       settings: {
-        connectedPeers: []
+        connectedPeers: [],
+        totals: {}
       },
       wsEvents: {},
       downloads: {},
@@ -57,6 +58,20 @@ module.exports = function createStores (connectionSettings) {
         if (message.updateTotals) {
           emitter.emit('peers')
           emitter.emit('settings')
+        }
+
+        if (message.swarm) {
+          state.settings.swarms[message.swarm.name] = message.swarm.state
+          console.log(state.settings.swarms)
+        }
+
+        if (message.peer) {
+          const i = state.peers.findIndex(peer => peer.feedId === message.peer.feedId)
+          if (i > 0) {
+            state.peers[i] = message.peer
+          } else {
+            state.peers.push(message.peer)
+          }
         }
 
         Object.assign(state.wsEvents, message)
@@ -171,11 +186,11 @@ module.exports = function createStores (connectionSettings) {
       emitter.emit('replaceState', '#search')
     })
 
-    emitter.on('updateConnection', (res) => {
-      state.settings.swarms = res.data
-      emitter.emit('getAllWallMessages')
-      emitter.emit('render')
-    })
+    // emitter.on('updateConnection', (res) => {
+    //   state.settings.swarms = res.data
+    //   emitter.emit('getAllWallMessages')
+    //   emitter.emit('render')
+    // })
 
     emitter.on('getAllWallMessages', () => {
       Object.keys(state.settings.swarms)
@@ -184,6 +199,7 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('getWallMessages', swarm)
         })
     })
+
     emitter.on('getWallMessages', (swarmKey) => {
       request.post('/wall-message/by-swarm-key', { swarmKey })
         .then((response) => {
@@ -234,6 +250,16 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('replaceState', '#subdir')
         })
         .catch(console.log)
+    })
+
+    emitter.on('addPeer', (peerId) => {
+      request.post('/peers', { peerId })
+        // .then((res) => {
+        //   emit('', res)
+        // })
+        .catch(() => {
+          state.addPeerError = true
+        })
     })
 
     function handleError (error) {
