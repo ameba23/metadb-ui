@@ -21,8 +21,8 @@ function view (state, emit) {
             value: state.inputAddPeer,
             name: 'addpeer',
             oninput: updateAddPeer,
-            placeholder: 'add a peer',
-            title: 'you can add a peer'
+            placeholder: 'add a peer using thier public key',
+            title: 'you can also add peers both joining the same swarm'
           }),
           h('div.input-group-append',
             h('input.btn.btn-outline-success', { type: 'submit', value: 'add peer' })
