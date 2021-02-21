@@ -67,6 +67,7 @@ function view (state, emit) {
   function displayWishListItem (file) {
     if (!Array.isArray(file.filename)) file.filename = [file.filename]
     const isDownloading = downloadingFiles.find(f => file.filename.includes(f))
+    file.holders = file.holders || []
     // TODO
     return h('li',
       h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
@@ -140,8 +141,8 @@ function view (state, emit) {
   }
 
   function namesSort (a, b) {
-    const A = a.filename[0]
-    const B = b.filename[0]
+    const A = Array.isArray(a.filename) ? a.filename[0] : ''
+    const B = Array.isArray(b.filename) ? b.filename[0] : ''
     if (A < B) return -1
     if (A > B) return 1
     return 0
