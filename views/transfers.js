@@ -3,6 +3,9 @@ const TITLE = 'metadb - transfers'
 const basic = require('./basic')
 const icons = require('../icons')
 
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif']
+const AUDIO_VIDEO_TYPES = ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
+
 module.exports = view
 
 function view (state, emit) {
@@ -113,14 +116,13 @@ function view (state, emit) {
   }
 
   function showOrHideMedia ({ hash, src, type }) {
-    if (state.downloadedItemVisible && state.downloadedItemVisible[hash]) {
-      return h(type.split('/')[0], { controls: true }, h('source', { src, type }))
+    const playerOptions = { controls: true, autoplay: true }
+    if (state.downloadedItemPlaying === hash) {
+      return h(type.split('/')[0], playerOptions, h('source', { src, type }))
     }
 
     function makeVisibleMedia () {
-      console.log('making rtsdfhu')
-      if (!state.downloadedItemVisible) state.downloadedItemVisible = {}
-      state.downloadedItemVisible[hash] = true
+      state.downloadedItemPlaying = hash
       emit('render')
     }
 
@@ -131,9 +133,6 @@ function view (state, emit) {
     const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
     const src = `${hostAndPort}/downloads/${file.hash}`
     const type = file.mimeType
-
-    const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif']
-    const AUDIO_VIDEO_TYPES = ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
 
     if (IMAGE_TYPES.includes(type)) return h('img', { src, width: 200, alt: file.filename })
     if (AUDIO_VIDEO_TYPES.includes(type)) return showOrHideMedia({ hash: file.hash, src, type })
