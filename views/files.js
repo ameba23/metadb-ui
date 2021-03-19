@@ -72,10 +72,11 @@ function filesView (state, emit, files, options = {}) {
   function tableLine (file) {
     if (file.dir) {
       // TODO could also have a button to download the directory
+      const newFile = Object.assign({}, file)
       return h('tr',
         h('td', h('strong', h('a', {
           href: 'javascript:void(null)',
-          onclick: subdirQuery(file.fullPath)
+          onclick: function () { console.log('eimtting', newFile.fullPath); emit('subdirQuery', newFile.fullPath) }
         }, icons.use('folder'), ' ', h('code', file.dir)))),
         h('td'),
         h('td')
@@ -132,9 +133,11 @@ function filesView (state, emit, files, options = {}) {
     }, h('code', portion)), ' / ')
   }
 
-  function subdirQuery (subdir) {
+  function subdirQuery (subdirQuery) {
+    console.log('prepare emit sq', subdirQuery)
     return () => {
-      emit('subdirQuery', subdir)
+      console.log('emit sq', subdirQuery)
+      emit('subdirQuery', subdirQuery)
     }
   }
 

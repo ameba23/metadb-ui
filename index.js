@@ -13,7 +13,6 @@ const defaultSettings = {
 }
 
 const wsroute = defaultSettings.host.split('//')[1] + ':' + defaultSettings.port
-console.log(wsroute)
 
 app.use(require('./stores')(defaultSettings))
 app.use(require('choo-websocket')(wsroute))

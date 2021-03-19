@@ -20,7 +20,8 @@ module.exports = function createStores (connectionSettings) {
       connectionSettings,
       request,
       indexerLog: '',
-      shares: []
+      shares: [],
+      uploads: []
     })
 
     emitter.on('ws:open', () => {
@@ -51,7 +52,7 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('getAllWallMessages')
         }
 
-        if (message.download && message.download.downloadComplete) {
+        if (message.downloaded) {
           emitter.emit('transfers')
         }
 
@@ -243,6 +244,7 @@ module.exports = function createStores (connectionSettings) {
     })
 
     emitter.on('subdirQuery', (subdirs) => {
+      console.log('subdirQuery', subdirs)
       state.subdirQuery = Array.isArray(subdirs) ? subdirs.join('/') : subdirs
       request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
         .then((res) => {

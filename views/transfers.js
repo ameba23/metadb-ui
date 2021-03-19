@@ -60,6 +60,20 @@ function view (state, emit) {
     )
   )
 
+  // function getTopLevelDirs (files) {
+  //   const topLevelDirs = {} // new Map()
+  //   for (const file in files) {
+  //     // if (!Array.isArray(file.filename)) file.filename = [file.filename]
+  //     // for (const f in file.filename) {
+  //     //   // topLevelDirs.set(f.split('/')[0], file.hash)
+  //     //   if (!topLevelDirs[f.split('/')[0]]) topLevelDirs[f.split('/')[0]] = []
+  //     //   topLevelDirs[f.split('/')[0]].push(file.hash)
+  //     // }
+  //     topLevelDirs[file.hash] = 'bop'
+  //   }
+  //   return JSON.stringify(topLevelDirs)
+  // }
+
   function displayUploadQueueItem (item) {
     return h('li', displayPeer(item.sender),
       h('ul', item.requestMessage.files.map(f => 'boop'))
