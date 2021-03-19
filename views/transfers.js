@@ -140,7 +140,7 @@ function view (state, emit) {
       emit('render')
     }
 
-    return h('button', { onclick: makeVisibleMedia }, 'play media')
+    return h('button', { onclick: makeVisibleMedia, title: 'Play media' }, icons.use('caret-right-square'))
   }
 
   function displayMedia (file) {
