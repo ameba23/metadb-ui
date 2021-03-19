@@ -13,9 +13,11 @@ module.exports = function (state, emit, content) {
   const me = state.peers.find(p => p.feedId === state.settings.key)
   const numberShares = me ? me.files || 0 : 0
 
-  const downloading = state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded).length
-    : false
+  const downloading = false
+  // const downloading = state.wsEvents.download
+  //   ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.downloaded[f]).length
+  //   : false
+  console.log('DNLD', downloading)
 
   state.searchterm = ''
 

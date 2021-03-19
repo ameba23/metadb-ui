@@ -12,8 +12,10 @@ function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const request = state.request
   const downloadingFiles = state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
+    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.downloaded[f])
     : []
+  // const downloadingFiles = state.wsEvents.download
+  //   ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
   return basic(state, emit,
     h('div',
       h('div.row',
@@ -131,16 +133,17 @@ function view (state, emit) {
 
   function showOrHideMedia ({ hash, src, type }) {
     const playerOptions = { controls: true, autoplay: true }
-    if (state.downloadedItemPlaying === hash) {
+    if (state.itemPlaying === hash) {
+      state.itemPlaying = false // only play once
       return h(type.split('/')[0], playerOptions, h('source', { src, type }))
     }
 
-    function makeVisibleMedia () {
-      state.downloadedItemPlaying = hash
+    function startPlaying () {
+      state.itemPlaying = hash
       emit('render')
     }
 
-    return h('button', { onclick: makeVisibleMedia, title: 'Play media' }, icons.use('caret-right-square'))
+    return h('button.btn', { onclick: startPlaying, title: 'Play media' }, icons.use('caret-right-square'))
   }
 
   function displayMedia (file) {

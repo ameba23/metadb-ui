@@ -73,6 +73,9 @@ module.exports = function createStores (connectionSettings) {
           } else {
             state.peers.push(message.peer)
           }
+          if (!state.settings.connectedPeers.includes(message.peer.feedId)) {
+            state.settings.connectedPeers.push(message.peer.feedId)
+          }
         }
 
         Object.assign(state.wsEvents, message)
