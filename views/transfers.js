@@ -11,6 +11,7 @@ module.exports = view
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const request = state.request
+  state.wsEvents.downloaded = state.wsEvents.downloaded || {}
   const downloadingFiles = state.wsEvents.download
     ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.downloaded[f])
     : []

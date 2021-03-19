@@ -33,7 +33,7 @@ module.exports = function createStores (connectionSettings) {
       try {
         const message = JSON.parse(data)
         if (message.indexer) {
-          state.indexerLog += message.indexer
+          state.indexerLog += message.indexer + '\n'
           emitter.emit('render')
         }
         if (message.sharedbUpdated && state.route === 'shares') {
