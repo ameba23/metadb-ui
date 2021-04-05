@@ -9,7 +9,9 @@ module.exports = {
   createDisplayPeer (state, options = {}) {
     // Display customisable amount of information about a peer
     return function displayPeer (peer) {
-      if (typeof peer === 'string') peer = state.peers.find(p => p.feedId === peer) || { feedId: peer }
+      if (typeof peer === 'string') {
+        peer = state.peers.find(p => p.feedId === peer) || { feedId: peer }
+      }
 
       const name = peer.name || peer.feedId
 
@@ -43,6 +45,11 @@ module.exports = {
       if (options.linkOnly) return toDisplay
       return h('li', toDisplay)
     }
+  },
+
+  getPeerName (state, feedId) {
+    const { name } = state.peers.find(p => p.feedId === feedId) || {}
+    return name
   },
 
   spinner () {

@@ -1,21 +1,29 @@
 const h = require('hyperscript')
+const icons = require('../icons')
 const basic = require('./basic')
+const components = require('../components')
+
 module.exports = view
 
 function view (state, emit) {
   const request = state.request
   const success = state.updateSuccessful
   state.updateSuccessful = false
-  state.setName = state.settings.peerNames
-    ? state.settings.peerNames[state.settings.key]
-    : ''
-  state.setDownloadPath = state.settings.downloadPath
+  state.setName = components.getPeerName(state, state.settings.key) || ''
+  state.setDownloadPath = state.settings.config.downloadPath
   const httpBasicAuth = state.connectionSettings.basicAuthUser && state.connectionSettings.basicAuthPassword
 
   return basic(state, emit,
     h('div',
       h('h3', 'Settings'),
       h('div',
+        h('strong', 'Public key: '),
+        h('code.text-reset', state.settings.key, ' '),
+        h('button.btn.btn-outline-secondary.btn-sm',
+          { onclick: copyToClipboard(state.settings.key), title: 'Copy public key to clipboard' },
+          icons.use('clipboard')
+        ),
+        h('br'),
         h('strong', 'Host: '), h('code.text-reset', state.connectionSettings.host),
         h('strong', ' Port: '), h('code.text-reset', state.connectionSettings.port.toString()),
         h('br'),
@@ -58,5 +66,17 @@ function view (state, emit) {
         emit('updateSettings', res)
       })
       .catch(console.log) // TODO
+  }
+
+  function copyToClipboard (text) {
+    return function () {
+      const listener = function (ev) {
+        ev.preventDefault()
+        ev.clipboardData.setData('text/plain', text)
+      }
+      document.addEventListener('copy', listener)
+      document.execCommand('copy')
+      document.removeEventListener('copy', listener)
+    }
   }
 }

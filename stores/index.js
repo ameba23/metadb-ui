@@ -9,7 +9,8 @@ module.exports = function createStores (connectionSettings) {
       peers: [],
       requests: [],
       settings: {
-        connectedPeers: []
+        connectedPeers: [],
+        totals: {}
       },
       wsEvents: {},
       downloads: {},
@@ -19,7 +20,8 @@ module.exports = function createStores (connectionSettings) {
       connectionSettings,
       request,
       indexerLog: '',
-      shares: []
+      shares: [],
+      uploads: []
     })
 
     emitter.on('ws:open', () => {
@@ -31,7 +33,7 @@ module.exports = function createStores (connectionSettings) {
       try {
         const message = JSON.parse(data)
         if (message.indexer) {
-          state.indexerLog += message.indexer
+          state.indexerLog += message.indexer + '\n'
           emitter.emit('render')
         }
         if (message.sharedbUpdated && state.route === 'shares') {
@@ -50,13 +52,30 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('getAllWallMessages')
         }
 
-        if (message.download && message.download.downloadComplete) {
+        if (message.downloaded || message.uploaded) {
           emitter.emit('transfers')
         }
 
         if (message.updateTotals) {
           emitter.emit('peers')
           emitter.emit('settings')
+        }
+
+        if (message.swarm) {
+          state.settings.swarms[message.swarm.name] = message.swarm.state
+          console.log(state.settings.swarms)
+        }
+
+        if (message.peer) {
+          const i = state.peers.findIndex(peer => peer.feedId === message.peer.feedId)
+          if (i > 0) {
+            state.peers[i] = message.peer
+          } else {
+            state.peers.push(message.peer)
+          }
+          if (!state.settings.connectedPeers.includes(message.peer.feedId)) {
+            state.settings.connectedPeers.push(message.peer.feedId)
+          }
         }
 
         Object.assign(state.wsEvents, message)
@@ -171,11 +190,11 @@ module.exports = function createStores (connectionSettings) {
       emitter.emit('replaceState', '#search')
     })
 
-    emitter.on('updateConnection', (res) => {
-      state.settings.swarms = res.data
-      emitter.emit('getAllWallMessages')
-      emitter.emit('render')
-    })
+    // emitter.on('updateConnection', (res) => {
+    //   state.settings.swarms = res.data
+    //   emitter.emit('getAllWallMessages')
+    //   emitter.emit('render')
+    // })
 
     emitter.on('getAllWallMessages', () => {
       Object.keys(state.settings.swarms)
@@ -184,6 +203,7 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('getWallMessages', swarm)
         })
     })
+
     emitter.on('getWallMessages', (swarmKey) => {
       request.post('/wall-message/by-swarm-key', { swarmKey })
         .then((response) => {
@@ -227,6 +247,7 @@ module.exports = function createStores (connectionSettings) {
     })
 
     emitter.on('subdirQuery', (subdirs) => {
+      console.log('subdirQuery', subdirs)
       state.subdirQuery = Array.isArray(subdirs) ? subdirs.join('/') : subdirs
       request.post('/files/subdir', { subdir: state.subdirQuery, opts: { oneLevel: true } })
         .then((res) => {
@@ -234,6 +255,16 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('replaceState', '#subdir')
         })
         .catch(console.log)
+    })
+
+    emitter.on('addPeer', (peerId) => {
+      request.post('/peers', { peerId })
+        // .then((res) => {
+        //   emit('', res)
+        // })
+        .catch(() => {
+          state.addPeerError = true
+        })
     })
 
     function handleError (error) {

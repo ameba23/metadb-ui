@@ -102,9 +102,14 @@ function view (state, emit) {
     const unSwarm = UnSwarm(swarm)
     const connectSwarm = ConnectSwarm(swarm)
 
-    const toggleSwarm = state.settings.swarms[swarm]
-      ? h('button.btn.btn-outline-danger.btn-sm', { onclick: unSwarm }, 'Disconnect')
-      : h('button.btn.btn-outline-success.btn-sm', { onclick: connectSwarm }, 'Connect')
+    let toggleSwarm
+    if (state.settings.swarms[swarm] === false) {
+      toggleSwarm = h('button.btn.btn-outline-success.btn-sm', { onclick: connectSwarm }, 'Connect')
+    } else if (state.settings.swarms[swarm] === true) {
+      toggleSwarm = h('button.btn.btn-outline-danger.btn-sm', { onclick: unSwarm }, 'Disconnect')
+    } else {
+      toggleSwarm = state.settings.swarms[swarm]
+    }
 
     return h('li',
       h('code.text-reset', swarm, ' '),

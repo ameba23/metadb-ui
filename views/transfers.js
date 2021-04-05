@@ -2,16 +2,22 @@ const h = require('hyperscript')
 const TITLE = 'metadb - transfers'
 const basic = require('./basic')
 const icons = require('../icons')
+const { readableBytes } = require('../util')
+
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif']
+const AUDIO_VIDEO_TYPES = ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
 
 module.exports = view
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
   const request = state.request
+  state.wsEvents.downloaded = state.wsEvents.downloaded || {}
   const downloadingFiles = state.wsEvents.download
-    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
+    ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.downloaded[f])
     : []
-
+  // const downloadingFiles = state.wsEvents.download
+  //   ? Object.keys(state.wsEvents.download).filter(f => !state.wsEvents.download[f].downloaded)
   return basic(state, emit,
     h('div',
       h('div.row',
@@ -39,7 +45,9 @@ function view (state, emit) {
           state.wsEvents.uploadQueue
             ? h('ul', state.wsEvents.uploadQueue.map(displayUploadQueueItem))
             : undefined,
-          JSON.stringify(state.wsEvents.upload),
+          state.wsEvents.upload
+            ? h('ul', Object.values(state.wsEvents.upload).map(displayUploadingItem))
+            : undefined,
           h('h3', 'Uploaded'),
           h('table.table',
             h('thead',
@@ -58,15 +66,46 @@ function view (state, emit) {
     )
   )
 
+  // function getTopLevelDirs (files) {
+  //   const topLevelDirs = {} // new Map()
+  //   for (const file in files) {
+  //     // if (!Array.isArray(file.filename)) file.filename = [file.filename]
+  //     // for (const f in file.filename) {
+  //     //   // topLevelDirs.set(f.split('/')[0], file.hash)
+  //     //   if (!topLevelDirs[f.split('/')[0]]) topLevelDirs[f.split('/')[0]] = []
+  //     //   topLevelDirs[f.split('/')[0]].push(file.hash)
+  //     // }
+  //     topLevelDirs[file.hash] = 'bop'
+  //   }
+  //   return JSON.stringify(topLevelDirs)
+  // }
+
+  function displayUploadingItem (item) {
+    const bytesSent = item.bytesSent || 0
+    const size = item.size || 0
+    const percentage = Math.round(bytesSent / size * 100)
+    return h('li',
+      displayPeer(item.to), ' ',
+      h('a', { href: `#files/${item.sha256}` }, h('code.text-reset', item.filename)),
+      ` ${readableBytes(bytesSent)} of ${readableBytes(size)} ${percentage}% ${item.kbps} kbps`,
+      progressBar(percentage)
+    )
+  }
+
   function displayUploadQueueItem (item) {
-    return h('li', displayPeer(item.sender),
-      h('ul', item.requestMessage.files.map(f => 'boop'))
+    return h('li',
+      displayPeer(item.to), ' ',
+      h('a', { href: `#files/${item.sha256}` }, h('code.text-reset', item.baseDir, '/', item.filePath)),
+      (item.offset > 0 || item.length > 0)
+        ? `Start: ${item.offset} Length: ${item.length}`
+        : undefined
     )
   }
 
   function displayWishListItem (file) {
     if (!Array.isArray(file.filename)) file.filename = [file.filename]
-    const isDownloading = downloadingFiles.find(f => file.filename.includes(f))
+    const isDownloading = downloadingFiles.find(f => f === file.sha256)
+    file.holders = file.holders || []
     // TODO
     return h('li',
       h('a', { href: `#files/${file.sha256}` }, file.filename.toString()),
@@ -85,35 +124,56 @@ function view (state, emit) {
     const size = properties.size || 0
     const percentage = Math.round(bytesReceived / size * 100)
     return h('span',
-      `${properties.bytesReceived || 0} of ${properties.size || 0} bytes (${percentage}%).`,
+      `${properties.bytesReceived || 0} of ${properties.size || 0} bytes (${percentage}%, ${properties.kbps} kbps).`,
       progressBar(percentage)
     )
   }
 
   function displayUploadedFile (file) {
     return h('tr',
-      h('td', h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.name))),
+      h('td', h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.filename))),
       h('td', displayPeer(file.to)),
       h('td', h('small', new Date(parseInt(file.timestamp)).toLocaleString()))
     )
   }
 
   function displayDownloadedFile (file) {
-    const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
-
     return h('tr',
       h('td',
-        h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.name)),
+        h('a', { href: `#files/${file.hash}` }, h('code.text-reset', file.filename)),
         file.verified ? h('span.text-success', { title: 'File verified' }, icons.use('check')) : h('strong.text-danger', 'Not verified!')
       ),
       h('td', displayPeer(file.from)),
-      h('td',
-        h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
-      ),
+      h('td', displayMedia(file)),
       h('td',
         h('small', new Date(parseInt(file.timestamp)).toLocaleString())
       )
     )
+  }
+
+  function showOrHideMedia ({ hash, src, type }) {
+    const playerOptions = { controls: true, autoplay: true }
+    if (state.itemPlaying === hash) {
+      state.itemPlaying = false // only play once
+      return h(type.split('/')[0], playerOptions, h('source', { src, type }))
+    }
+
+    function startPlaying () {
+      state.itemPlaying = hash
+      emit('render')
+    }
+
+    return h('button.btn', { onclick: startPlaying, title: 'Play media' }, icons.use('caret-right-square'))
+  }
+
+  function displayMedia (file) {
+    const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
+    const src = `${hostAndPort}/downloads/${file.hash}`
+    const type = file.mimeType
+
+    if (IMAGE_TYPES.includes(type)) return h('img', { src, width: 200, alt: file.filename })
+    if (AUDIO_VIDEO_TYPES.includes(type)) return showOrHideMedia({ hash: file.hash, src, type })
+    return h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
   }
 
   function displayPeer (feedId) {
@@ -140,8 +200,8 @@ function view (state, emit) {
   }
 
   function namesSort (a, b) {
-    const A = a.filename[0]
-    const B = b.filename[0]
+    const A = Array.isArray(a.filename) ? a.filename[0] : ''
+    const B = Array.isArray(b.filename) ? b.filename[0] : ''
     if (A < B) return -1
     if (A > B) return 1
     return 0

@@ -38,7 +38,7 @@ function view (state, emit) {
       const basenames = Array.from(new Set(filenames.map(path.basename)))
       const dirnames = Array.from(new Set(filenames.map(path.dirname)))
 
-      const icon = file.metadata
+      const icon = (file.metadata && file.metadata.mimeType)
         ? file.metadata.mimeType.slice(0, 5) === 'audio'
           ? icons.use('music-note') : icons.use('file')
         : icons.use('file')
@@ -86,6 +86,7 @@ function view (state, emit) {
   }
 
   function publishComment (commentMessage) {
+    if (!file.sha256) return
     request.post(`/files/${file.sha256}`, commentMessage)
       .then((res) => {
         // emit('updateComments', res)
