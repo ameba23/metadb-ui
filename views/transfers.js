@@ -2,6 +2,7 @@ const h = require('hyperscript')
 const TITLE = 'metadb - transfers'
 const basic = require('./basic')
 const icons = require('../icons')
+const { readableBytes } = require('../util')
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif']
 const AUDIO_VIDEO_TYPES = ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
@@ -44,7 +45,9 @@ function view (state, emit) {
           state.wsEvents.uploadQueue
             ? h('ul', state.wsEvents.uploadQueue.map(displayUploadQueueItem))
             : undefined,
-          JSON.stringify(state.wsEvents.upload),
+          state.wsEvents.upload
+            ? h('ul', Object.values(state.wsEvents.upload).map(displayUploadingItem))
+            : undefined,
           h('h3', 'Uploaded'),
           h('table.table',
             h('thead',
@@ -77,9 +80,25 @@ function view (state, emit) {
   //   return JSON.stringify(topLevelDirs)
   // }
 
+  function displayUploadingItem (item) {
+    const bytesSent = item.bytesSent || 0
+    const size = item.size || 0
+    const percentage = Math.round(bytesSent / size * 100)
+    return h('li',
+      displayPeer(item.to), ' ',
+      h('a', { href: `#files/${item.sha256}` }, h('code.text-reset', item.filename)),
+      ` ${readableBytes(bytesSent)} of ${readableBytes(size)} ${percentage}% ${item.kbps} kbps`,
+      progressBar(percentage)
+    )
+  }
+
   function displayUploadQueueItem (item) {
-    return h('li', displayPeer(item.sender),
-      h('ul', item.requestMessage.files.map(f => 'boop'))
+    return h('li',
+      displayPeer(item.to), ' ',
+      h('a', { href: `#files/${item.sha256}` }, h('code.text-reset', item.baseDir, '/', item.filePath)),
+      (item.offset > 0 || item.length > 0)
+        ? `Start: ${item.offset} Length: ${item.length}`
+        : undefined
     )
   }
 

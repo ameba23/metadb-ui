@@ -52,7 +52,7 @@ module.exports = function createStores (connectionSettings) {
           emitter.emit('getAllWallMessages')
         }
 
-        if (message.downloaded) {
+        if (message.downloaded || message.uploaded) {
           emitter.emit('transfers')
         }
 
