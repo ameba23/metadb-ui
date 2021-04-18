@@ -12,7 +12,8 @@ function view (state, emit) {
   const peer = state.peers.find(peer => peer.feedId === state.params.peerId)
   if (peer) {
     peer.name = peer.name || peer.feedId
-    peer.stars = peer.stars || 0
+    peer.stars = peer.stars || []
+    peer.comments = peer.comments || []
     return basic(state, emit,
       h('div',
         h('h3', createDisplayPeer(state, { short: true })(peer)),
@@ -29,6 +30,16 @@ function view (state, emit) {
             h('ul', peer.stars.map(displayStarredFile))
           )
           : undefined,
+        peer.comments.length
+          ? h('div',
+            h('h4', 'Comments on files'),
+            h('ul', peer.comments.map(displayFileComment))
+          )
+          : undefined,
+        h('h4', 'Shared files'),
+        // TODO
+        // const files = peer.files ? ` - ${peer.files} files. ` : undefined
+        // const bytes = peer.bytes ? `${readableBytes(peer.bytes)} ` : undefined
         filesView(state, emit, 'files')
       )
     )
@@ -36,8 +47,22 @@ function view (state, emit) {
     return basic(state, emit, h('p', 'Peer not found'))
   }
 
-  function displayStarredFile (star) {
-    return h('li', h('a', { href: `#files/${star}` }, star))
+  function displayStarredFile (file) {
+    return h('li',
+      h('a', { href: `#files/${file.sha256}` },
+        h('code.text-reset', file.filename.toString())
+      )
+    )
+  }
+
+  function displayFileComment (file) {
+    // TODO
+    if (!file.filename) return
+    return h('li',
+      h('a', { href: `#files/${file.sha256}` },
+        h('code.text-reset', file.filename.toString())
+      )
+    )
   }
 
   function copyToClipboard (text) {
