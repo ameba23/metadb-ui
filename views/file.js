@@ -1,7 +1,7 @@
 const html = require('choo/html')
 const h = require('hyperscript')
 const path = require('path')
-const TITLE = 'metadb'
+const TITLE = 'harddrive-party - file info'
 const { readableBytes, secondsToHms } = require('../util')
 const basic = require('./basic')
 const components = require('../components')

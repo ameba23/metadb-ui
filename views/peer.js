@@ -3,7 +3,7 @@ const basic = require('./basic')
 const icons = require('../icons')
 const { filesView } = require('./files')
 const { createDisplayPeer } = require('../components')
-const TITLE = 'metadb - peer'
+const TITLE = 'harddrive-party - peer'
 
 module.exports = view
 

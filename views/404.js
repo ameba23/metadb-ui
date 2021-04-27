@@ -1,7 +1,7 @@
 const h = require('hyperscript')
 const basic = require('./basic')
 
-const TITLE = 'metadb - route not found'
+const TITLE = 'harddrive-party - route not found'
 
 module.exports = view
 

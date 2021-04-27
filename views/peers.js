@@ -1,7 +1,7 @@
 const h = require('hyperscript')
 const basic = require('./basic')
 const { createDisplayPeer } = require('../components')
-const TITLE = 'metadb - peers'
+const TITLE = 'harddrive-party - peers'
 
 module.exports = view
 

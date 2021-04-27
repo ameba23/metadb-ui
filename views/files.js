@@ -1,5 +1,5 @@
 const h = require('hyperscript')
-const TITLE = 'metadb'
+const TITLE = 'harddrive-party - files'
 const path = require('path')
 const icons = require('../icons')
 const { readableBytes } = require('../util')

@@ -125,7 +125,7 @@ module.exports = function (state, emit, content) {
     return h('span',
       h('h2.bg-danger', `Error when trying to connect to the API on
         ${state.connectionSettings.host}:${state.connectionSettings.port}.`),
-      h('h3', `Is the metadb API running at ${state.connectionSettings.host}:${state.connectionSettings.port}? `)
+      h('h3', `Is the harddrive-party API running at ${state.connectionSettings.host}:${state.connectionSettings.port}? `)
     )
   }
 
