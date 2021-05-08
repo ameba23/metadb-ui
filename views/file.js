@@ -6,6 +6,7 @@ const { readableBytes, secondsToHms } = require('../util')
 const basic = require('./basic')
 const components = require('../components')
 const icons = require('../icons')
+const { IMAGE_TYPES, AUDIO_VIDEO_TYPES } = require('../util')
 
 module.exports = view
 
@@ -33,7 +34,7 @@ function view (state, emit) {
       const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
       file.holders = file.holders || []
       const isAvailable = file.holders.find(h => state.settings.connectedPeers.includes(h))
-      // const iHave = file.holders.find(h => h === state.settings.key)
+      const iHave = file.holders.find(h => h === state.settings.key)
 
       const basenames = Array.from(new Set(filenames.map(path.basename)))
       const dirnames = Array.from(new Set(filenames.map(path.dirname)))
@@ -47,11 +48,14 @@ function view (state, emit) {
         basenames.map((basename) => {
           return h('h2', icon, h('code.text-reset', basename))
         }),
-        h('div', requested
-          ? h('p.text-success', 'File queued for download')
-          : h('span',
-            h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`, { type: 'button', onclick: requestFile }, isAvailable ? 'Download file' : 'Queue file for download')
-          )
+        h('div',
+          iHave ? displayMedia(file) : requested
+            ? h('p.text-success', 'File queued for download')
+            : h('span',
+              h(`button.btn.btn-outline-${isAvailable ? 'success' : 'secondary'}`,
+                { type: 'button', onclick: requestFile },
+                isAvailable ? 'Download file' : 'Queue file for download')
+            )
         ),
         dirnames.map((dirname) => {
           return h('h4',
@@ -203,5 +207,30 @@ function view (state, emit) {
     return () => {
       emit('subdirQuery', subdir)
     }
+  }
+
+  function showOrHideMedia ({ hash, src, type }) {
+    const playerOptions = { controls: true, autoplay: true }
+    if (state.itemPlaying === hash) {
+      state.itemPlaying = false // only play once
+      return h(type.split('/')[0], playerOptions, h('source', { src, type }))
+    }
+
+    function startPlaying () {
+      state.itemPlaying = hash
+      emit('render')
+    }
+
+    return h('button.btn', { onclick: startPlaying, title: 'Play media' }, icons.use('caret-right-square'))
+  }
+
+  function displayMedia (file) {
+    const hostAndPort = `${state.connectionSettings.host}:${state.connectionSettings.port}`
+    const src = `${hostAndPort}/shares/${file.sha256}`
+    const type = file.metadata ? file.metadata.mimeType : undefined
+
+    if (IMAGE_TYPES.includes(type)) return h('img', { src, width: 200, alt: file.filename })
+    if (AUDIO_VIDEO_TYPES.includes(type)) return showOrHideMedia({ hash: file.sha256, src, type })
+    return h('a.btn.btn-outline-secondary', { href: src, target: '_blank' }, h('small', 'Open in browser'))
   }
 }

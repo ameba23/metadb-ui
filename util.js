@@ -38,4 +38,11 @@ function secondsToHms (d) {
   return hDisplay + mDisplay + sDisplay
 }
 
-module.exports = { readableBytes, formData, createOnSubmit, secondsToHms }
+module.exports = {
+  readableBytes,
+  formData,
+  createOnSubmit,
+  secondsToHms,
+  IMAGE_TYPES: ['image/png', 'image/jpeg', 'image/gif'],
+  AUDIO_VIDEO_TYPES: ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
+}

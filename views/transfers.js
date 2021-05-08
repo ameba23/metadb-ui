@@ -2,10 +2,7 @@ const h = require('hyperscript')
 const TITLE = 'harddrive-party - transfers'
 const basic = require('./basic')
 const icons = require('../icons')
-const { readableBytes } = require('../util')
-
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif']
-const AUDIO_VIDEO_TYPES = ['audio/mpeg', 'audio/ogg', 'audio/webm', 'audio/wav', 'video/mp4', 'video/webm']
+const { readableBytes, IMAGE_TYPES, AUDIO_VIDEO_TYPES } = require('../util')
 
 module.exports = view
 
@@ -173,7 +170,7 @@ function view (state, emit) {
 
     if (IMAGE_TYPES.includes(type)) return h('img', { src, width: 200, alt: file.filename })
     if (AUDIO_VIDEO_TYPES.includes(type)) return showOrHideMedia({ hash: file.hash, src, type })
-    return h('a.btn.btn-outline-secondary', { href: `${hostAndPort}/downloads/${file.hash}`, target: '_blank' }, h('small', 'Open in browser'))
+    return h('a.btn.btn-outline-secondary', { href: src, target: '_blank' }, h('small', 'Open in browser'))
   }
 
   function displayPeer (feedId) {

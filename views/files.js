@@ -76,7 +76,7 @@ function filesView (state, emit, files, options = {}) {
       return h('tr',
         h('td', h('strong', h('a', {
           href: 'javascript:void(null)',
-          onclick: function () { console.log('eimtting', newFile.fullPath); emit('subdirQuery', newFile.fullPath) }
+          onclick: function () { console.log('emitting', newFile.fullPath); emit('subdirQuery', newFile.fullPath) }
         }, icons.use('folder'), ' ', h('code', file.dir)))),
         h('td'),
         h('td')
