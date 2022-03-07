@@ -2,152 +2,112 @@ const h = require('hyperscript')
 const TITLE = 'harddrive-party - files'
 const path = require('path')
 const icons = require('../icons')
-const { readableBytes } = require('../util')
+const { readableBytes, isDir } = require('../util')
 const basic = require('./basic')
+const renderMedia = require('render-media')
+const Readable = require('stream').Readable
 
 module.exports = view
-module.exports.filesView = filesView
-
-const mainNoFilesMessage = h('div.alert-warning', { role: 'alert' },
-  h('p',
-    'You currently have no files in the database.  To add some, either ',
-    h('a', { href: '#connection' }, 'connect to a swarm'), ' or ', h('a', { href: '#shares' }, 'add some files'), ' yourself.')
-)
 
 function view (state, emit) {
   if (state.title !== TITLE) emit(state.events.DOMTITLECHANGE, TITLE)
+
   return basic(state, emit,
     h('div',
-      h('button.btn.btn-outline-secondary.btn-sm', { onclick: function () { emit('chronological') } }, 'Recently added'),
-      ' ',
-      h('button.btn.btn-outline-secondary.btn-sm', {
-        onclick: function () {
-          emit('subdirQuery', '')
-        }
-      }, 'Directory view'),
-      filesView(state, emit, 'files', { noFilesMessage: mainNoFilesMessage })
+      h('ul',
+        state.files['/']
+          ? state.files['/'].sort(dirsFirst).map(displayFiles('/'))
+          : h('li', 'No files to display')
+      ),
+      // h('p', JSON.stringify(state.files)),
+      h('h2', 'Wishlist:'),
+      h('p', JSON.stringify(state.wishlist)),
+      h('h2', 'Downloads:'),
+      h('p', JSON.stringify(state.downloads))
     )
   )
-}
 
-function filesView (state, emit, files, options = {}) {
-  const request = state.request
-  const noFilesMessage = options.noFilesMessage || h('p', 'No files to display')
-
-  const title = (options.subdirQuery || options.subdirQuery === '')
-    ? h('div',
-      h('h2',
-        icons.use('folder'),
-        h('code',
-          h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' / '),
-          options.subdirQuery.split('/').filter(e => e !== '').slice(0, -1).map(subdir),
-          options.subdirQuery.split('/').slice(-1)[0]
+  function displayFiles (baseDir) {
+    return function (file) {
+      const fullPath = getFullPath(baseDir, file.name)
+      if (isDir(file.mode)) {
+        return h(
+          'li',
+          h('button',
+            { onclick: expandDir(file, fullPath) },
+            icons.use(baseDir === '/' ? 'person' : 'folder'),
+            h('code.text-reset', file.name)
+          ),
+          file.expanded
+            ? h('ul', state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath)))
+            : ''
         )
-      ),
-      h('button.btn.btn-sm.btn-outline-secondary.mb-3', {
-        type: 'button',
-        onclick: function () {
-          emit('requestDirectory', options.subdirQuery)
+      } else {
+        return h(
+          'li',
+          icons.use('file'),
+          h('code.text-reset', file.name),
+          ' ',
+          readableBytes(file.size),
+          h('button', { onclick: showMedia(fullPath) }, 'show media'),
+          h('div', { id: 'preview' + cleanPathString(fullPath) })
+        )
+      }
+      function expandDir (dir, path) {
+        return function () {
+          if (dir.expanded) {
+            dir.expanded = false
+            emit('render')
+          } else {
+            dir.expanded = true
+            if (state.files[path]) {
+              emit('render')
+            } else {
+              emit('request', { readdir: { path } })
+            }
+          }
         }
-      }, 'Download directory')
-    )
-    : options.title ? h('h2', options.title) : undefined
-
-  return h('div',
-    title,
-    h('table.table.table-striped.table-sm',
-      h('thead',
-        h('tr',
-          h('th', { scope: 'col' }, 'Filename'),
-          h('th', { scope: 'col' }, 'MIME type'),
-          h('th', { scope: 'col' }, 'Size')
-        )
-      ),
-      h('tbody', state[files].map(tableLine))
-    ),
-    state[files].length
-      ? undefined
-      : noFilesMessage
-  )
-  function tableLine (file) {
-    if (file.dir) {
-      // TODO could also have a button to download the directory
-      const newFile = Object.assign({}, file)
-      return h('tr',
-        h('td', h('strong', h('a', {
-          href: 'javascript:void(null)',
-          onclick: function () { console.log('emitting', newFile.fullPath); emit('subdirQuery', newFile.fullPath) }
-        }, icons.use('folder'), ' ', h('code', file.dir)))),
-        h('td'),
-        h('td')
-      )
-    }
-
-    const filenames = Array.isArray(file.filename) ? file.filename : [file.filename]
-    const requested = state.requests.find(f => f.sha256 === file.sha256)
-    file.holders = file.holders || []
-    const iHave = file.holders.find(h => h === state.settings.key)
-    const isAvailable = file.holders.find(h => state.settings.connectedPeers.includes(h))
-
-    // TODO should we reverse order so basename appears first and less relevant parts of the dir tree later?
-    return h('tr',
-      h('td',
-        iHave
-          ? ''
-          : requested
-            ? h('button.btn.btn-sm.btn-outline-success',
-              { type: 'button', disabled: true, title: 'File queued for download' },
-              icons.use('file-arrow-down')
-            )
-            : h(
-              `button.btn.btn-sm.btn-outline-${isAvailable ? 'primary' : 'secondary'}`,
-              { type: 'button',
-                onclick: requestFile(file.sha256),
-                title: isAvailable ? 'Download file' : 'Queue file for download'
-              },
-              icons.use('file-arrow-down')
-            ),
-
-        filenames.map((filename) => {
-          return h('span',
-            options.subdirQuery || options.subdirQuery === ''
-              ? ' '
-              : h('span', h('a', { href: 'javascript:void(null)', onclick: subdirQuery('') }, ' /'), ' '),
-            path.dirname(filename).split('/').map(subdir),
-            h('a', { href: `#files/${file.sha256}` }, h('code', path.basename(filename))),
-            h('br')
-          )
-        })
-      ),
-      h('td', file.metadata.mimeType),
-      h('td', readableBytes(file.size))
-    )
-  }
-
-  function subdir (portion, i, filePath) {
-    if (portion === '.') return h('span')
-
-    return h('span', h('a', {
-      href: 'javascript:void(null)',
-      onclick: subdirQuery(filePath.slice(0, i + 1))
-    }, h('code', portion)), ' / ')
-  }
-
-  function subdirQuery (subdirQuery) {
-    console.log('prepare emit sq', subdirQuery)
-    return () => {
-      console.log('emit sq', subdirQuery)
-      emit('subdirQuery', subdirQuery)
+      }
     }
   }
 
-  function requestFile (sha256) {
+  function getFullPath (baseDir, dirname) {
+    const fullPath = path.join(baseDir, dirname)
+    return fullPath[0] === '/' ? fullPath.slice(1) : fullPath
+  }
+
+  function dirsFirst (fileA, fileB) {
+    const aIsDir = isDir(fileA.mode)
+    const bIsDir = isDir(fileB.mode)
+    if (aIsDir && bIsDir) return 0
+    if (aIsDir && !bIsDir) return -1
+    if (bIsDir && !aIsDir) return 1
+  }
+
+  function showMedia (filepath) {
     return function () {
-      request.post('/request', { files: [sha256] })
-        .then((res) => {
-          emit('transfers')
-        })
-        .catch(console.log) // TODO
+      renderMedia.append({
+        name: filepath,
+        createReadStream: function (opts) {
+          console.log('createReadStream called', opts)
+          const rs = new Readable()
+          rs._read = function (n) {
+            console.log(' read called', n)
+          }
+          emit('showMedia', filepath, rs, opts)
+          return rs
+        }
+      }, '#preview' + cleanPathString(filepath), (err, elem) => {
+        console.log('Element added', err, elem)
+      })
     }
+  }
+
+  function cleanPathString (p) {
+    let output = ''
+    for (const c of p) {
+      if (!['/', ' ', '-', '.'].includes(c)) output += c
+    }
+    return output
   }
 }

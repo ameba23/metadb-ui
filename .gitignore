@@ -8,3 +8,4 @@ npm-debug.log*
 .DS_Store
 dist/debug-index.html
 bootstrap-unmini.svg
+dist/twistd.pid

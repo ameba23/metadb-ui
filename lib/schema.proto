@@ -1,0 +1,118 @@
+syntax = "proto2";
+
+// WS interface messages
+
+message ClientMessage {
+  required int32 id = 1;
+
+  message Readdir {
+    required string path = 1;
+  }
+
+  message Open {
+    required string path = 1;
+  }
+
+  message Read {
+    required uint32 fd = 1;
+    required uint32 len = 2;
+    required uint32 pos = 3;
+  }
+
+  message Close {
+    required uint32 fd = 1;
+  }
+
+  message Cat {
+    required string path = 1;
+    optional uint64 start = 2;
+    optional uint64 end = 3;
+  }
+
+  message Find {
+    optional string basepath = 1;
+    optional string searchterm = 2;
+  }
+
+  message Download {
+    required string path = 1;
+    optional string destination = 2;
+  }
+
+  oneof msg {
+    Readdir readdir = 2;
+    Open open = 3;
+    Read read = 4;
+    Close close = 5;
+    Cat cat = 6;
+    Find find = 7;
+    Download download = 8;
+  }
+}
+
+message ServerMessage {
+  required int32 id = 1;
+
+  message Readdir {
+    message Stat {
+      required string name = 1;
+      required uint64 size = 2;
+      optional uint32 mode = 3;
+      optional uint64 atime = 4;
+      optional uint64 mtime = 5;
+      optional uint64 ctime = 6;
+      /* optional uint32 dev = 6; */
+      optional uint64 ino = 7;
+      optional uint32 nlink = 8;
+    }
+
+    repeated Stat files = 1;
+  }
+
+  message Open {
+    required uint32 fd = 1;
+  }
+
+  message Read {
+    required bytes data = 1;
+    required int32 bytesRead = 2;
+  }
+
+  message Close {
+  }
+
+  message Find {
+    repeated string results = 1;
+  }
+
+  message Download {
+    required int32 bytesRead = 1;
+  }
+
+  message EndResponse {
+  }
+
+  message Cat {
+    required bytes data = 1;
+  }
+
+  message Success {
+    oneof msg {
+      Readdir readdir = 1;
+      Open open = 2;
+      Read read = 3;
+      Close close = 4;
+      Cat cat = 5;
+      Find find = 6;
+      Download download = 7;
+      EndResponse endResponse = 8;
+    }
+  }
+
+  oneof response {
+    int32 err = 2;
+    Success success = 3;
+  }
+}
+
+

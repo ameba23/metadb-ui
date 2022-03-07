@@ -6,6 +6,13 @@ function readableBytes (bytes) {
   return (bytes / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + sizes[i]
 }
 
+const S_IFMT = 61440
+const S_IFDIR = 16384
+
+function isDir (mode) {
+  return (mode & S_IFMT) === S_IFDIR
+}
+
 function formData (form) {
   const data = {}
   new FormData(form).forEach((v, k) => {
@@ -39,6 +46,7 @@ function secondsToHms (d) {
 }
 
 module.exports = {
+  isDir,
   readableBytes,
   formData,
   createOnSubmit,
