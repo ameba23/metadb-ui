@@ -6,17 +6,14 @@
     "build": "browserify index.js -t sheetify | indexhtmlify > dist/index.html",
     "build-debug": "browserify --debug index.js -t sheetify | indexhtmlify > dist/debug-index.html",
     "test": "standard && npm run test-deps",
-    "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons",
-    "protobuf": "pbf lib/schema.proto > lib/messages.js"
+    "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
   },
   "author": "ameba23",
   "license": "AGPL-3.0-only",
   "dependencies": {
-    "axios": "^0.19.0",
     "bootstrap": "^4.5.2",
     "browserify": "^16.5.0",
     "choo": "^6.13.3",
-    "choo-websocket": "^2.0.0",
     "envify": "^4.1.0",
     "hyperscript": "^2.0.2",
     "indexhtmlify": "^2.0.0",
@@ -24,8 +21,7 @@
     "nanohtml": "^1.9.1",
     "protocol-buffers-encodings": "^1.1.1",
     "render-media": "^4.1.0",
-    "sheetify": "^7.4.0",
-    "ws": "^8.5.0"
+    "sheetify": "^7.4.0"
   },
   "devDependencies": {
     "dependency-check": "^3.3.0",
