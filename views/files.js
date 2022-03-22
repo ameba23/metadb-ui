@@ -14,7 +14,7 @@ function view (state, emit) {
 
   return basic(state, emit,
     h('div',
-      h('ul',
+      h('ul.list-unstyled.ml-4',
         state.files['/']
           ? state.files['/'].sort(dirsFirst).map(displayFiles('/'))
           : h('li', 'No files to display')
@@ -30,16 +30,26 @@ function view (state, emit) {
   function displayFiles (baseDir) {
     return function (file) {
       const fullPath = getFullPath(baseDir, file.name)
+      const isMe = baseDir === '/' && file.mode === 16895
       if (isDir(file.mode)) {
+        const downloadState = state.downloads[fullPath]
+          ? `Downloaded ${readableBytes(state.downloads[fullPath].totalBytesRead)}`
+          : state.wishlist.includes(fullPath)
+            ? 'Queued for download'
+            : h('button.btn.btn-sm.bit-light',
+              { onclick: downloadDir(fullPath),
+                title: 'Download' }, icons.use('arrow-down-circle'))
+
         return h(
           'li',
-          h('button',
+          h('button.btn.bit-light.btn-sm',
             { onclick: expandDir(file, fullPath) },
             icons.use(baseDir === '/' ? 'person' : 'folder'),
-            h('code.text-reset', file.name)
+            h('code.text-reset.ml-1', file.name + (isMe ? ' (You)' : ''))
           ),
+          downloadState,
           file.expanded
-            ? h('ul', state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath)))
+            ? h('ul.list-unstyled.ml-4', state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath)))
             : ''
         )
       } else {
@@ -48,7 +58,7 @@ function view (state, emit) {
           icons.use('file'),
           h('code.text-reset', file.name),
           ' ',
-          readableBytes(file.size),
+          h('small.mx-2', readableBytes(file.size)),
           h('button', { onclick: showMedia(fullPath) }, 'show media'),
           h('div', { id: 'preview' + cleanPathString(fullPath) })
         )
@@ -66,6 +76,11 @@ function view (state, emit) {
               emit('request', { readdir: { path } })
             }
           }
+        }
+      }
+      function downloadDir (path) {
+        return function () {
+          emit('download', path)
         }
       }
     }
@@ -104,10 +119,7 @@ function view (state, emit) {
   }
 
   function cleanPathString (p) {
-    let output = ''
-    for (const c of p) {
-      if (!['/', ' ', '-', '.'].includes(c)) output += c
-    }
-    return output
+    // return encodeURIComponent(p).replace(/[!'()]/g, escape).replace(/\./g, '%2A')
+    return Buffer.from(p).toString('hex')
   }
 }

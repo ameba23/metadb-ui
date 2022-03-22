@@ -4,9 +4,7 @@
   "main": "build.js",
   "scripts": {
     "build": "browserify index.js -t sheetify | indexhtmlify > dist/index.html",
-    "build-debug": "browserify --debug index.js -t sheetify | indexhtmlify > dist/debug-index.html",
-    "test": "standard && npm run test-deps",
-    "test-deps": "dependency-check . && dependency-check . --extra --no-dev -i tachyons"
+    "build-debug": "browserify --debug index.js -t sheetify | indexhtmlify > dist/debug-index.html"
   },
   "author": "ameba23",
   "license": "AGPL-3.0-only",

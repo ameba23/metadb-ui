@@ -2121,12 +2121,7 @@ function defined (val) {
 },{"buffer":16,"protocol-buffers-encodings":97}],4:[function(require,module,exports){
 (function (Buffer){
 const { ClientMessage, ServerMessage } = require('./messages')
-// const Pbf = require('pbf')
-// const { createError } = require('../util')
 const EventEmitter = require('events')
-// const { WebSocket } = require('ws')
-// const ws = require('ws')
-
 
 module.exports = class WsClient extends EventEmitter {
   constructor (host, port) {
@@ -20484,13 +20479,15 @@ module.exports = function createStores (wsClient) {
     })
 
     emitter.on('download', (path) => {
-      state.downloads[path] = { bytesRead: 0 }
       wsClient.request({ download: { path } }).then((id) => {
+        state.downloads[path] = { bytesRead: 0 }
         emitter.on(id.toString(), (message) => {
           if (message.success) {
             if (message.success.download) {
               state.downloads[path] = { bytesRead: message.success.download.bytesRead }
               // TODO optionally also has a 'filePath' property
+              // TODO only render if we are on a page where we display dl progress
+              emitter.emit('render')
             } else if (message.success.endResponse) {
               // TODO no longer an active download
             }
@@ -20688,6 +20685,7 @@ module.exports = function (state, emit, content) {
 }
 
 },{"../icons":1,"hyperscript":26}],167:[function(require,module,exports){
+(function (Buffer){
 const h = require('hyperscript')
 const TITLE = 'harddrive-party - files'
 const path = require('path')
@@ -20720,14 +20718,23 @@ function view (state, emit) {
   function displayFiles (baseDir) {
     return function (file) {
       const fullPath = getFullPath(baseDir, file.name)
+      const isMe = baseDir === '/' && file.mode === 16895
       if (isDir(file.mode)) {
+        const downloadState = state.downloads[fullPath]
+          ? `Downloaded ${state.downloads[fullPath].bytesRead} bytes`
+          : state.wishlist.includes(fullPath)
+            ? 'On wishlist'
+            : h('button.btn.btn-sm.btn-outline-secondary',
+              { onclick: downloadDir(fullPath) }, 'Download')
+
         return h(
           'li',
           h('button',
             { onclick: expandDir(file, fullPath) },
             icons.use(baseDir === '/' ? 'person' : 'folder'),
-            h('code.text-reset', file.name)
+            h('code.text-reset', file.name + (isMe ? ' (You)' : ''))
           ),
+          downloadState,
           file.expanded
             ? h('ul', state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath)))
             : ''
@@ -20756,6 +20763,11 @@ function view (state, emit) {
               emit('request', { readdir: { path } })
             }
           }
+        }
+      }
+      function downloadDir (path) {
+        return function () {
+          emit('download', path)
         }
       }
     }
@@ -20794,14 +20806,12 @@ function view (state, emit) {
   }
 
   function cleanPathString (p) {
-    let output = ''
-    for (const c of p) {
-      if (!['/', ' ', '-', '.'].includes(c)) output += c
-    }
-    return output
+    // return encodeURIComponent(p).replace(/[!'()]/g, escape).replace(/\./g, '%2A')
+    return Buffer.from(p).toString('hex')
   }
 }
 
-},{"../icons":1,"../util":164,"./basic":166,"hyperscript":26,"path":94,"render-media":132,"stream":144}]},{},[2]);
+}).call(this,require("buffer").Buffer)
+},{"../icons":1,"../util":164,"./basic":166,"buffer":16,"hyperscript":26,"path":94,"render-media":132,"stream":144}]},{},[2]);
 </script>
 </html>
