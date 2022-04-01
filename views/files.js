@@ -14,10 +14,18 @@ function view (state, emit) {
 
   return basic(state, emit,
     h('div',
-      h('ul.list-unstyled.ml-4',
-        state.files['/']
-          ? state.files['/'].sort(dirsFirst).map(displayFiles('/'))
-          : h('li', 'No files to display')
+      h('table.table.table-hover.table-sm',
+        // h('thead',
+        //   h('tr',
+        //     h('th', { scope: 'row' }, 'Name'),
+        //     h('th', { scope: 'row' }, 'Size')
+        //   )
+        // ),
+        h('tbody',
+          state.files['/']
+            ? state.files['/'].sort(dirsFirst).map(displayFiles('/', 0))
+            : h('p', 'No files to display')
+        )
       ),
       // h('p', JSON.stringify(state.files)),
       h('h2', 'Wishlist:'),
@@ -27,7 +35,7 @@ function view (state, emit) {
     )
   )
 
-  function displayFiles (baseDir) {
+  function displayFiles (baseDir, depth) {
     return function (file) {
       const fullPath = getFullPath(baseDir, file.name)
       const isMe = baseDir === '/' && file.mode === 16895
@@ -40,27 +48,34 @@ function view (state, emit) {
               { onclick: downloadDir(fullPath),
                 title: 'Download' }, icons.use('arrow-down-circle'))
 
-        return h(
-          'li',
-          h('button.btn.bit-light.btn-sm',
-            { onclick: expandDir(file, fullPath) },
-            icons.use(baseDir === '/' ? 'person' : 'folder'),
-            h('code.text-reset.ml-1', file.name + (isMe ? ' (You)' : ''))
-          ),
-          downloadState,
-          file.expanded
-            ? h('ul.list-unstyled.ml-4', state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath)))
-            : ''
-        )
+        return [
+          h('tr',
+            h('td',
+              h(`button.btn.bit-light.btn-sm.ml-${depth}`,
+                { onclick: expandDir(file, fullPath) },
+                icons.use(baseDir === '/' ? 'person' : 'folder'),
+                h('code.text-reset.ml-1', file.name + (isMe ? ' (You)' : ''))
+              ),
+              downloadState
+            ),
+            h('td', '')
+          )].concat(file.expanded
+          ? state.files[fullPath].sort(dirsFirst).map(displayFiles(fullPath, depth + 1))
+          : [])
       } else {
         return h(
-          'li',
-          icons.use('file'),
-          h('code.text-reset', file.name),
-          ' ',
-          h('small.mx-2', readableBytes(file.size)),
-          h('button', { onclick: showMedia(fullPath) }, 'show media'),
-          h('div', { id: 'preview' + cleanPathString(fullPath) })
+          'tr',
+          h('td',
+            h(`span.ml-${depth}`,
+              icons.use('file'),
+              h('code.text-reset', file.name)
+            )
+          ),
+          h('td',
+            h('small.mx-2', readableBytes(file.size)),
+            h('button', { onclick: showMedia(fullPath) }, 'show media'),
+            h('div', { id: 'preview' + cleanPathString(fullPath) })
+          )
         )
       }
       function expandDir (dir, path) {
