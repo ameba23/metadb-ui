@@ -6,6 +6,7 @@ module.exports = function (state, emit, content) {
   state.searchterm = ''
   const numberShares = '?' // TODO
   const downloading = undefined // TODO
+  const numberConnectedPeers = state.files['/'] ? state.files['/'].length - 1 : 0
 
   return h('body',
     h('nav.navbar.navbar-expand-lg.navbar-light.bg-light',
@@ -22,10 +23,11 @@ module.exports = function (state, emit, content) {
         ),
 
         h(`li.nav-item${(state.route === '/') ? '.active' : ''}`,
-          { title: 'Files view' }, // TODO
+          { title: `${numberConnectedPeers} connected peers` }, // TODO
           h('a.nav-link', { href: '#' },
-            icons.use('files'),
-            ' files'
+            icons.use('people'),
+            ' peers ',
+            h('small', h('strong', numberConnectedPeers))
           )
         ),
 

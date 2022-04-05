@@ -3,15 +3,20 @@ const h = require('hyperscript')
 const { filesView } = require('./files')
 const { spinner } = require('../components')
 const icons = require('../icons')
+const treeTable = require('../components/tree-table')
 
 module.exports = view
 
 function view (state, emit) {
   // state.dirToShare = state.settings.homeDir
   state.dirToShare = 'homedir'
+
+  const ownName = state.files['/']
+    ? state.files['/'].find(f => f.mode === 16895).name
+    : undefined
+
   return basic(state, emit,
     h('div',
-      h('h3', 'shares'),
       h('p', 'Index a local directory for sharing:'),
       h('form', { id: 'indexDir', onsubmit: onSubmit },
         h('div.input-group.mb-3',
@@ -22,9 +27,8 @@ function view (state, emit) {
         )
       ),
       h('h4', 'Shared folders'),
-      h('ul'
-        // state.shareTotals.map(displayShareDirectory)
-      )
+      ownName ? treeTable(state, emit, ownName, true) : undefined
+      // state.shareTotals.map(displayShareDirectory)
       // filesView(state, emit, 'files')
     )
   )

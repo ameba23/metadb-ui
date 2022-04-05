@@ -7,7 +7,7 @@ const Readable = require('stream').Readable
 
 module.exports = function (state, emit, baseDir = '/', ownSharesOnly) {
   const filter = ownSharesOnly
-    ? (file) => file.mode === 16895
+    ? () => true
     : (file) => file.mode !== 16895
 
   const filesToDisplay = state.files[baseDir]
@@ -15,6 +15,8 @@ module.exports = function (state, emit, baseDir = '/', ownSharesOnly) {
       .filter(filter)
       .sort(dirsFirst)
     : []
+
+  if (!state.files[baseDir]) emit('request', { readdir: { path: baseDir } })
 
   return h('table.table.table-hover.table-sm',
     // h('thead',
@@ -35,13 +37,15 @@ module.exports = function (state, emit, baseDir = '/', ownSharesOnly) {
       const fullPath = getFullPath(baseDir, file.name)
       const isMe = baseDir === '/' && file.mode === 16895
       if (isDir(file.mode)) {
-        const downloadState = state.downloads[fullPath]
-          ? `Downloaded ${readableBytes(state.downloads[fullPath].totalBytesRead)}`
-          : state.wishlist.includes(fullPath)
-            ? 'Queued for download'
-            : h('button.btn.btn-sm.bit-light',
-              { onclick: downloadDir(fullPath),
-                title: 'Download' }, icons.use('arrow-down-circle'))
+        const downloadState = ownSharesOnly || baseDir === '/'
+          ? undefined
+          : state.downloads[fullPath]
+            ? `Downloaded ${readableBytes(state.downloads[fullPath].totalBytesRead)}`
+            : state.wishlist.includes(fullPath)
+              ? 'Queued for download'
+              : h('button.btn.btn-sm.bit-light',
+                { onclick: downloadDir(fullPath),
+                  title: 'Download' }, icons.use('arrow-down-circle'))
 
         return [
           h('tr', { onclick: expandDir(file, fullPath) },
